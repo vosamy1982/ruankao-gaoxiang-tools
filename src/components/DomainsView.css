@@ -1,0 +1,246 @@
+.domains-container {
+  display: flex;
+  height: calc(100vh - 120px);
+  width: 100%;
+  background: var(--bg-color);
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.mnemonic-sidebar {
+  flex: 0 0 280px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mnemonic-header {
+  padding: 1.25rem;
+  background: #F3F4F6;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.mnemonic-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mnemonic-text {
+  font-size: 1.3rem;
+  letter-spacing: 2px;
+  color: var(--text-main);
+  font-weight: bold;
+}
+
+.domain-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.domain-list-item {
+  width: 100%;
+  text-align: left;
+  padding: 1rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-left: 4px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.domain-list-item:hover {
+  background: #F9FAFB;
+}
+
+.domain-list-item.active {
+  background: #EFF6FF;
+  border-left-color: #3B82F6;
+}
+
+.domain-char-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: #E5E7EB;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.domain-list-item.active .domain-char-badge {
+  background: #3B82F6;
+  color: white;
+}
+
+.domain-name {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+.domain-list-item.active .domain-name {
+  color: #1D4ED8;
+}
+
+/* Right Panel */
+.domain-detail-panel {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.detail-icon-wrapper {
+  background: #F3F4F6;
+  padding: 1rem;
+  border-radius: 12px;
+  color: var(--primary);
+}
+
+.detail-title-block h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.detail-desc {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.detail-section {
+  margin-bottom: 2.5rem;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #F3F4F6;
+}
+
+.section-title-icon {
+  color: #3B82F6;
+}
+
+/* Goals Table */
+.goals-table-wrapper {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.goals-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.goals-table th {
+  background: #F3F4F6;
+  padding: 0.85rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-main);
+  border-bottom: 2px solid var(--border-light);
+  font-size: 0.95rem;
+}
+
+.goals-table th:first-child {
+  width: 55%;
+}
+
+.goals-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.95rem;
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.goals-table tr:last-child td {
+  border-bottom: none;
+}
+
+.goal-cell {
+  background: #FAFAFA;
+  color: #111827;
+  font-weight: 500;
+  border-right: 1px solid var(--border-light);
+}
+
+.goal-icon {
+  color: #10B981;
+  vertical-align: middle;
+  margin-right: 0.5rem;
+  margin-top: -2px;
+}
+
+.check-cell {
+  color: #3B82F6;
+  font-weight: 600;
+}
+
+/* Key Points Block */
+.keypoints-block {
+  background: #F9FAFB;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.keypoints-text {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-main);
+}
+
+.mnemonic-badge {
+  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #FEF3C7;
+  color: #92400E;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: 1px solid #FDE68A;
+}

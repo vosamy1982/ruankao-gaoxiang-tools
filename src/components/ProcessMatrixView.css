@@ -1,0 +1,112 @@
+.pmv-container {
+  width: 100%;
+  height: calc(100vh - 100px); /* 与 MatrixView 一致的高度撑满屏幕，便于内滚动 */
+  background: #F3F4F6;
+  padding: 0;
+  display: flex;
+}
+
+.pmv-viewport {
+  flex: 1; /* 占据全宽剩余 */
+  overflow: auto; /* 必须在此层内滚动出框框感 */
+  background: white;
+  border: 1px solid #9CA3AF;
+  border-radius: 0;
+  margin-top: 1rem;
+}
+
+.pmv-table {
+  width: 100%;
+  min-width: 1000px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.pmv-table th,
+.pmv-table td {
+  border: 1px solid #D1D5DB;
+  font-size: 0.9rem;          /* 统一采用 0.9rem */
+  padding: 0.8rem;          /* 统一采用 0.8rem 内边距紧凑排版 */
+  vertical-align: top;
+  color: #111827;
+}
+
+/* 首列首行冻结背景及文字格式 */
+.pmv-col-header {
+  background-color: #E5E7EB;
+  font-weight: 700;
+  text-align: center;
+  color: #374151;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid #D1D5DB !important; /* 取消 2px 粗边界 */
+}
+
+/* 完美复刻 Excel 视图里对于左侧标题行的纵向直书渲染 */
+.pmv-row-header {
+  background-color: #F9FAFB;
+  font-weight: 700;
+  text-align: center;
+  color: #374151;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  vertical-align: middle !important;
+  border-right: 1px solid #D1D5DB !important;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 0.2rem;
+  width: 80px;
+}
+
+/* 角落格 */
+.pmv-corner-header {
+  background-color: #E5E7EB;
+  font-weight: 700;
+  text-align: center;
+  color: #374151;
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  border-right: 1px solid #D1D5DB !important;
+  border-bottom: 1px solid #D1D5DB !important;
+  width: 80px;
+  vertical-align: middle !important;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 0.1rem;
+}
+
+
+/* 分布在单元格中的过程项集群样式 */
+.pmv-cell {
+  background: #FFFFFF;
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.pmv-cell-empty {
+  background: #FFFFFF; /* 不再使用灰度弱化填充，完全以细格底色为准，严格类似原生空白表单 */
+}
+
+/* 划过的时候，统一用浅灰色表示 */
+tbody tr:hover .pmv-cell:not(.pmv-cell-empty) {
+  background: #F1F5F9; 
+  cursor: pointer;
+}
+
+.pmv-procs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.pmv-proc-item {
+  color: #111827;
+  font-weight: 700; /* 与 Excel 保持一致加重 */
+  text-align: center;
+  word-break: keep-all; 
+}

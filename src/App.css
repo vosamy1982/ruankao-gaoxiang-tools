@@ -1,0 +1,103 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.app-wrapper {
+  width: 100%;
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  letter-spacing: normal;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.view-toggle::-webkit-scrollbar {
+  display: none;
+}
+
+.toggle-btn {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--border);
+  background: #F9FAFB;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle-btn.active {
+  background: #E5E7EB;
+  color: var(--text-main);
+  border-color: var(--text-muted);
+}
+
+.toggle-btn:hover:not(.active) {
+  background: #F3F4F6;
+}
+
+@media (max-width: 900px) {
+  .app-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: calc(env(safe-area-inset-top, 0px) + 0.75rem) 0.75rem 0.75rem;
+  }
+
+  .app-title {
+    font-size: 1.05rem;
+  }
+
+  .view-toggle {
+    width: 100%;
+    padding-bottom: 0.1rem;
+  }
+
+  .toggle-btn {
+    flex: 0 0 auto;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.8rem;
+  }
+
+  .app-wrapper {
+    padding: 0;
+  }
+}
+
+/* Animations reset */
+.fade-in {
+  /* 去除多余的动画，保持极速渲染的感觉 */
+  animation: none;
+}

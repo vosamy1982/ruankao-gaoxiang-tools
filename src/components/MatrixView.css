@@ -1,0 +1,213 @@
+/* 保留原生 Excel 面板整体风格 */
+.excel-container {
+  width: 100%;
+  height: calc(100vh - 100px);
+  background: #F3F4F6;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 过滤工具栏核心设计（双排布局） */
+.filter-toolbar {
+  background: #FFFFFF;
+  border: 1px solid #9CA3AF;
+  border-bottom: none; /* 下边缘接入 viewport 顶边缘 */
+  padding: 0.8rem 1rem;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  flex-shrink: 0;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.filter-row-inputs {
+  padding-top: 0.8rem;
+  border-top: 1px dashed #D1D5DB;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+.filter-item-large {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #111827;
+  font-weight: 600;
+  flex: 1;
+}
+
+.filter-item-large label {
+  width: 100px;
+  flex-shrink: 0;
+  text-align: right;
+  margin-right: 0.5rem;
+}
+
+/* 输入框和下拉选项原生统一风格 */
+.excel-input {
+  border: 1px solid #9CA3AF;
+  background: #F9FAFB;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.85rem;
+  color: #111827;
+  outline: none;
+  border-radius: 0; /* 切记：纯 Excel 风格无圆角 */
+  height: 28px;
+}
+
+.excel-input:focus {
+  border-color: #3B82F6;
+  background: #FFFFFF;
+}
+
+.text-input {
+  width: 100%;
+}
+
+.excel-btn-clear {
+  border: 1px solid #9CA3AF;
+  background: #F3F4F6;
+  color: #374151;
+  padding: 0 1rem;
+  height: 28px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.excel-btn-clear:hover {
+  background: #E5E7EB;
+}
+
+.excel-viewport {
+  flex: 1;
+  overflow: auto;
+  background: white;
+  border: 1px solid #9CA3AF;
+  border-radius: 0;
+}
+
+.excel-table {
+  width: 100%;
+  min-width: 1200px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.excel-table th,
+.excel-table td {
+  border: 1px solid #D1D5DB;
+  font-size: 0.9rem;
+  padding: 0.8rem;
+  vertical-align: top;
+  color: #111827;
+}
+
+/* 顶部冻结表头 */
+.excel-border-header {
+  background-color: #E5E7EB;
+  font-weight: 700;
+  text-align: center;
+  color: #374151;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid #D1D5DB !important;
+}
+
+/* 左侧列冻结合并单元格 */
+.excel-row-header {
+  background-color: #F9FAFB;
+  font-weight: 700;
+  text-align: center;
+  color: #374151;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  vertical-align: middle !important;
+  border-right: 1px solid #D1D5DB !important;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 0.2rem;
+}
+
+.excel-cell {
+  background: #FFFFFF;
+}
+
+tbody tr:hover .excel-cell {
+  background: #F1F5F9;
+}
+
+.process-name {
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.process-name-clickable {
+  cursor: pointer;
+}
+
+.process-name-clickable:hover .p-title {
+  color: #2563EB;
+  text-decoration: underline;
+}
+
+.p-title {
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.p-group-hint {
+  font-size: 0.75rem;
+  color: #6B7280;
+}
+
+.itto-ul {
+  list-style-type: none;
+  padding-left: 0.2rem;
+  margin: 0;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.itto-ul li {
+  margin-bottom: 0.3rem;
+  position: relative;
+  padding-left: 0.8rem;
+}
+
+.itto-ul li::before {
+  content: "•";
+  color: #9CA3AF;
+  position: absolute;
+  left: 0;
+}
+
+/* 增强的高亮背景色匹配考生的标记笔 */
+.highlight-mark {
+  background-color: #FCD34D;
+  color: #000;
+  padding: 0 0.1rem;
+  font-weight: 700;
+}
+
+.empty-excel-state {
+  text-align: center;
+  vertical-align: middle;
+  padding: 3rem !important;
+  color: #6B7280 !important;
+}

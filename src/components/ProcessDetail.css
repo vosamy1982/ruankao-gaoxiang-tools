@@ -1,0 +1,109 @@
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(30, 41, 59, 0.4) !important;
+}
+
+.modal-content {
+  background: white;
+  width: 90%;
+  max-width: 960px;
+  border-radius: 24px;
+  padding: 2.5rem;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.close-btn {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: #F1F5F9;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; justify-content: center; align-items: center;
+  transition: all 0.2s;
+}
+.close-btn:hover {
+  background: #E2E8F0;
+  color: var(--text-main);
+  transform: rotate(90deg);
+}
+
+.modal-header {
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #F1F5F9;
+  padding-bottom: 1.5rem;
+}
+
+.kb-tag {
+  display: inline-block;
+  background: #EEF2FF;
+  color: var(--primary);
+  padding: 0.35rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+}
+
+.modal-header h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-main);
+}
+
+.itto-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.itto-column {
+  background: #F8FAFC;
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+}
+
+.itto-column h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+
+.text-blue-600 { color: #2563EB; }
+.text-yellow-600 { color: #D97706; }
+.text-green-600 { color: #16A34A; }
+
+.itto-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.itto-list li {
+  padding: 0.8rem 1.2rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .itto-container {
+    grid-template-columns: 1fr;
+  }
+}
