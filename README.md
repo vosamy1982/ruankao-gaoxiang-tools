@@ -4,6 +4,12 @@
 
 当前开源版内置的是精简原创示例数据：保留 24 章目录结构，每章 3 个考点，共 72 个考点；不包含官方教材、考试题库、第三方培训资料或来源不明确的截图素材。
 
+## Demo
+
+GitHub Pages demo will be available after the deployment workflow finishes:
+
+https://vosamy1982.github.io/ruankao-gaoxiang-tools/
+
 ## 功能
 
 - 10 大知识域、5 大过程组、49 个过程的 ITTO 交叉矩阵
@@ -62,6 +68,10 @@ npm run lint
 代码使用 MIT License。
 
 本项目不应包含官方教材、考试题库或第三方培训资料的未授权内容。用户导入或维护的数据由用户自行负责版权合规。
+
+## 贡献
+
+请阅读 `CONTRIBUTING.md`。本项目只接受原创或明确授权可再分发的学习内容。
 
 ## 开源前待办
 
