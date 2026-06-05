@@ -5,6 +5,22 @@
   "description": "A local-first study and ITTO query tool for the Ruankao advanced project management exam.",
   "license": "MIT",
   "type": "module",
+  "homepage": "https://vosamy1982.github.io/ruankao-gaoxiang-tools/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vosamy1982/ruankao-gaoxiang-tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vosamy1982/ruankao-gaoxiang-tools/issues"
+  },
+  "keywords": [
+    "ruankao",
+    "project-management",
+    "itto",
+    "study-tool",
+    "react",
+    "vite"
+  ],
   "engines": {
     "node": ">=22.13.0"
   },

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import pmbokDataJson from './data/pmbok.json';
 import type { PmbokData, Process } from './types';
 import MatrixView from './components/MatrixView';
@@ -17,9 +17,35 @@ import './App.css';
 const pmbokData = pmbokDataJson as PmbokData;
 type ViewMode = 'mapping' | 'matrix' | 'search' | 'documents' | 'eightDomains' | 'examPoints' | 'admin' | 'concepts';
 
+const viewModes: ViewMode[] = ['mapping', 'matrix', 'search', 'documents', 'eightDomains', 'examPoints', 'admin', 'concepts'];
+
+const getViewFromHash = (): ViewMode => {
+  const hashView = window.location.hash.replace('#', '');
+  return viewModes.includes(hashView as ViewMode) ? hashView as ViewMode : 'mapping';
+};
+
 function App() {
-  const [view, setView] = useState<ViewMode>('mapping'); // 默认展示宏观映射矩阵
+  const [view, setView] = useState<ViewMode>(getViewFromHash); // 默认展示宏观映射矩阵
   const [selectedProcess, setSelectedProcess] = useState<Process | null>(null);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setView(getViewFromHash());
+      setSelectedProcess(null);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleViewChange = (nextView: ViewMode) => {
+    setSelectedProcess(null);
+    if (window.location.hash === `#${nextView}`) {
+      setView(nextView);
+      return;
+    }
+    window.location.hash = nextView;
+  };
 
   const activeKnowledgeArea = selectedProcess
     ? pmbokData.knowledgeAreas.find(ka => ka.id === selectedProcess.knowledgeAreaId)
@@ -36,56 +62,56 @@ function App() {
         <div className="view-toggle">
           <button
             className={`toggle-btn ${view === 'mapping' ? 'active' : ''}`}
-            onClick={() => setView('mapping')}
+            onClick={() => handleViewChange('mapping')}
           >
             <BookOpen size={18} />
             原生交叉矩阵
           </button>
           <button
             className={`toggle-btn ${view === 'matrix' ? 'active' : ''}`}
-            onClick={() => setView('matrix')}
+            onClick={() => handleViewChange('matrix')}
           >
             <LayoutGrid size={18} />
             Excel列级检索
           </button>
           <button
             className={`toggle-btn ${view === 'search' ? 'active' : ''}`}
-            onClick={() => setView('search')}
+            onClick={() => handleViewChange('search')}
           >
             <Search size={18} />
             多维反向搜索
           </button>
           <button
             className={`toggle-btn ${view === 'documents' ? 'active' : ''}`}
-            onClick={() => setView('documents')}
+            onClick={() => handleViewChange('documents')}
           >
             <Layers size={18} />
             33项目文件清单
           </button>
           <button
             className={`toggle-btn ${view === 'eightDomains' ? 'active' : ''}`}
-            onClick={() => setView('eightDomains')}
+            onClick={() => handleViewChange('eightDomains')}
           >
             <PieChart size={18} />
             八大绩效域
           </button>
           <button
             className={`toggle-btn ${view === 'examPoints' ? 'active' : ''}`}
-            onClick={() => setView('examPoints')}
+            onClick={() => handleViewChange('examPoints')}
           >
             <BookOpenText size={18} />
             考点精炼阅览
           </button>
           <button
             className={`toggle-btn ${view === 'admin' ? 'active' : ''}`}
-            onClick={() => setView('admin')}
+            onClick={() => handleViewChange('admin')}
           >
             <Settings size={18} />
             内容后台维护
           </button>
           <button
             className={`toggle-btn ${view === 'concepts' ? 'active' : ''}`}
-            onClick={() => setView('concepts')}
+            onClick={() => handleViewChange('concepts')}
           >
             <Lightbulb size={18} />
             知识点辨析

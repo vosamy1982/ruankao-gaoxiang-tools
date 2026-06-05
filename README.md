@@ -6,9 +6,27 @@
 
 ## Demo
 
-GitHub Pages demo will be available after the deployment workflow finishes:
+在线演示：
 
 https://vosamy1982.github.io/ruankao-gaoxiang-tools/
+
+也可以直达常用视图：
+
+- [原生交叉矩阵](https://vosamy1982.github.io/ruankao-gaoxiang-tools/#mapping)
+- [Excel 列级检索](https://vosamy1982.github.io/ruankao-gaoxiang-tools/#matrix)
+- [多维反向搜索](https://vosamy1982.github.io/ruankao-gaoxiang-tools/#search)
+- [考点精炼阅览](https://vosamy1982.github.io/ruankao-gaoxiang-tools/#examPoints)
+- [内容后台维护](https://vosamy1982.github.io/ruankao-gaoxiang-tools/#admin)
+
+## 界面预览
+
+| ITTO 交叉矩阵 | 考点阅览 |
+|---|---|
+| ![ITTO 交叉矩阵](docs/screenshots/mapping.png) | ![考点阅览](docs/screenshots/examPoints.png) |
+
+| 反向搜索 | 内容维护 |
+|---|---|
+| ![反向搜索](docs/screenshots/search.png) | ![内容维护](docs/screenshots/admin.png) |
 
 ## 功能
 
@@ -41,6 +59,17 @@ npm run preview
 ```bash
 npm run lint
 ```
+
+## 使用说明
+
+1. 打开在线 demo 或本地开发服务器。
+2. 在顶部导航选择复习模式：
+   - `原生交叉矩阵`：按知识域和过程组查看 49 个过程分布。
+   - `Excel列级检索`：按知识域、过程组、输入、工具与技术、输出做组合筛选。
+   - `多维反向搜索`：输入关键词，反查相关过程及其输入、工具与技术、输出。
+   - `考点精炼阅览`：浏览 24 章原创示例考点。
+   - `内容后台维护`：在开发模式下编辑 Markdown 考点并预览。
+3. 需要分享某个视图时，可以复制带 hash 的链接，例如 `/#examPoints`。
 
 ## 数据说明
 
@@ -75,6 +104,4 @@ npm run lint
 
 ## 开源前待办
 
-- 补充应用截图
 - 补充数据导入/导出说明
-- 确认 GitHub 仓库地址后补充 repository 字段
