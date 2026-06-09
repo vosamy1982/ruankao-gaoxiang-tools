@@ -218,7 +218,9 @@
 .admin-toolbar-right {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
 }
 
 .save-message {
@@ -231,18 +233,44 @@
   color: #ef4444;
 }
 
-.btn-save {
+.dirty-message {
+  font-size: 0.85rem;
+  color: #d97706;
+  font-weight: 500;
+}
+
+.admin-file-input {
+  display: none;
+}
+
+.btn-save,
+.btn-data {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: #3b82f6;
-  color: white;
-  border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-data {
+  background: white;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.btn-data:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.btn-save {
+  background: #3b82f6;
+  color: white;
+  border: none;
 }
 
 .btn-save:hover {
@@ -252,6 +280,18 @@
 .btn-save:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+@media (max-width: 1000px) {
+  .admin-toolbar {
+    align-items: flex-start;
+    gap: 0.75rem;
+    flex-direction: column;
+  }
+
+  .admin-toolbar-right {
+    justify-content: flex-start;
+  }
 }
 
 .admin-editor-wrapper {
@@ -283,3 +323,74 @@
 .admin-editor-layout > .w-md-editor { flex: 1; border: none !important; border-radius: 0 !important; background: transparent !important; }
 .admin-live-preview { flex: 1; background: white; overflow-y: auto; padding: 2rem; border-left: 1px solid #eee; }
 .admin-live-preview .article-body-inner { max-width: 800px; margin: 0 auto; }
+
+@media (max-width: 700px) {
+  .admin-container {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100dvh - 120px);
+    padding: 0.75rem;
+  }
+
+  .admin-sidebar {
+    flex: none;
+    width: 100%;
+    max-height: 46dvh;
+  }
+
+  .admin-actions,
+  .delete-point-btn {
+    opacity: 1;
+  }
+
+  .admin-main {
+    width: 100%;
+    min-height: 72dvh;
+  }
+
+  .admin-toolbar {
+    padding: 0.75rem;
+  }
+
+  .admin-toolbar-left {
+    align-items: flex-start;
+    line-height: 1.45;
+  }
+
+  .admin-toolbar-right {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .admin-toolbar-right .save-message,
+  .admin-toolbar-right .dirty-message,
+  .admin-toolbar-right .btn-save {
+    grid-column: 1 / -1;
+  }
+
+  .btn-data,
+  .btn-save {
+    justify-content: center;
+    padding-inline: 0.75rem;
+  }
+
+  .admin-editor-wrapper {
+    min-height: 68dvh;
+  }
+
+  .admin-editor-layout {
+    flex-direction: column;
+  }
+
+  .admin-editor-layout > .w-md-editor,
+  .admin-live-preview {
+    min-height: 34dvh;
+  }
+
+  .admin-live-preview {
+    padding: 1rem;
+    border-top: 1px solid #eee;
+    border-left: none;
+  }
+}
