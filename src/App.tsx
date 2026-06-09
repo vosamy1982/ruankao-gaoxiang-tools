@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import pmbokDataJson from './data/pmbok.json';
-import type { PmbokData, Process } from './types';
+import examDataJson from './data/exam-points.json';
+import type { ExamChapter, PmbokData, Process } from './types';
 import MatrixView from './components/MatrixView';
 import SearchView from './components/SearchView';
 import ProcessMatrixView from './components/ProcessMatrixView';
@@ -27,6 +28,7 @@ const getViewFromHash = (): ViewMode => {
 function App() {
   const [view, setView] = useState<ViewMode>(getViewFromHash); // 默认展示宏观映射矩阵
   const [selectedProcess, setSelectedProcess] = useState<Process | null>(null);
+  const [examChapters, setExamChapters] = useState<ExamChapter[]>(examDataJson as ExamChapter[]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -131,11 +133,11 @@ function App() {
         ) : view === 'eightDomains' ? (
           <DomainsView />
         ) : view === 'admin' ? (
-          <AdminView />
+          <AdminView chapters={examChapters} setChapters={setExamChapters} />
         ) : view === 'concepts' ? (
           <ConceptsView />
         ) : (
-          <ExamPointsView />
+          <ExamPointsView sourceChapters={examChapters} />
         )}
       </main>
 

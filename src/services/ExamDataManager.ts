@@ -97,11 +97,16 @@ export const fullNormalizeContent = (content: string, references?: ContentRefere
 
 export const contentReferences = buildContentReferenceMap(rawChapters);
 
-export const processedChapters: ExamChapter[] = rawChapters.map(chapter => ({
-  ...chapter,
-  points: chapter.points.map(point => ({
-    ...point,
-    uniqueId: `${chapter.id}_${point.id}`,
-    content: fullNormalizeContent(point.content, contentReferences)
-  }))
-}));
+export const processExamChapters = (chapterData: ExamChapter[]): ExamChapter[] => {
+  const references = buildContentReferenceMap(chapterData);
+  return chapterData.map(chapter => ({
+    ...chapter,
+    points: chapter.points.map(point => ({
+      ...point,
+      uniqueId: `${chapter.id}_${point.id}`,
+      content: fullNormalizeContent(point.content, references)
+    }))
+  }));
+};
+
+export const processedChapters = processExamChapters(rawChapters);

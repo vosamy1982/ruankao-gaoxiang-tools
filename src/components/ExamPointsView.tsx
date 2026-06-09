@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { processedChapters as chapters } from '../services/ExamDataManager';
+import { processExamChapters } from '../services/ExamDataManager';
 import type { ExamChapter } from '../types';
 import { ChevronRight, ChevronDown, Star, Beaker, FileText, BookOpenText, Search, X } from 'lucide-react';
 import { ExamPointRenderer } from './ExamPointRenderer';
@@ -7,7 +7,12 @@ import './ExamPointsView.css';
 
 const getPointUniqueId = (chapterId: string, pointId: string, uniqueId?: string) => uniqueId ?? `${chapterId}_${pointId}`;
 
-export default function ExamPointsView() {
+interface ExamPointsViewProps {
+  sourceChapters: ExamChapter[];
+}
+
+export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) {
+  const chapters = useMemo(() => processExamChapters(sourceChapters), [sourceChapters]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUniqueId, setSelectedUniqueId] = useState<string | null>(
     chapters[0]?.points[0]
@@ -24,7 +29,7 @@ export default function ExamPointsView() {
       if (point) return point;
     }
     return null;
-  }, [selectedUniqueId]);
+  }, [chapters, selectedUniqueId]);
   
   const filteredChapters = useMemo(() => {
     if (!searchTerm.trim()) return chapters;
@@ -38,7 +43,7 @@ export default function ExamPointsView() {
       if (filteredPoints.length > 0) return { ...chapter, points: filteredPoints };
       return null;
     }).filter(Boolean) as ExamChapter[];
-  }, [searchTerm]);
+  }, [chapters, searchTerm]);
 
   const visibleExpandedChapters = useMemo(() => {
     if (!searchTerm.trim()) return expandedChapters;
