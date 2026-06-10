@@ -38,6 +38,7 @@ https://vosamy1982.github.io/ruankao-gaoxiang-tools/
 - Markdown 考点阅览，支持表格、图片路径和 GFM
 - 浏览器内导入、校验、编辑和导出私有考点 JSON
 - 开发模式下保存源码数据与粘贴图片上传
+- 自动检查数据结构、图片资源和内容合规风险
 
 ## 快速开始
 
@@ -58,8 +59,10 @@ npm run preview
 质量检查：
 
 ```bash
-npm run lint
+npm run check
 ```
+
+也可以分别执行 `npm run lint`、`npm test`、`npm run audit:data` 和 `npm run build`。
 
 ## 使用说明
 
@@ -96,6 +99,17 @@ npm run lint
 
 开源版保留工具能力和数据结构，但只内置可公开的原创示例内容。完整个人资料建议通过后续导入功能在本地使用，不随仓库发布。
 
+## 数据审计
+
+`npm run audit:data` 会检查：
+
+- 考点数据和 ITTO 数据的必填字段、重复 ID 与关联关系。
+- 重复标题、重复正文、占位内容和异常长内容。
+- 疑似转载来源标记、长引用和外部链接。
+- 图片是否位于 `public/images` 且已提交到仓库。
+
+当前公开数据的审计基线见 `docs/content-audit.md`。自动检查只能发现明显风险，不能替代人工版权审阅。
+
 ## 开发期内容维护
 
 `vite.config.ts` 中包含两个仅用于本地开发服务器的接口：
@@ -115,6 +129,8 @@ npm run lint
 
 请阅读 `CONTRIBUTING.md`。本项目只接受原创或明确授权可再分发的学习内容。
 
-## 开源前待办
+每个 Pull Request 都会在 Node.js 24 环境执行数据审计、测试、Lint 和生产构建。
 
-- 增加自动化内容合规检查
+## 维护状态
+
+当前公开版已具备基础数据审计和自动化测试。后续维护重点是继续提高原创示例质量、增加导入体验和控制前端包体积。
