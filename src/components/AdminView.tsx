@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
-import MDEditor from '@uiw/react-md-editor';
+import MDEditor from '@uiw/react-md-editor/nohighlight';
 import {
   Save, Plus, Trash2, AlertCircle, BookOpenText, FileText, ChevronRight,
   ChevronDown, Search, X, Upload, Download

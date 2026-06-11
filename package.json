@@ -1,7 +1,7 @@
 {
   "name": "ruankao-gaoxiang-tools",
   "private": false,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A local-first study and ITTO query tool for the Ruankao advanced project management exam.",
   "license": "MIT",
   "type": "module",
@@ -30,7 +30,8 @@
     "lint": "eslint .",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "audit:data": "node --experimental-strip-types scripts/audit-data.ts",
-    "check": "npm run lint && npm run test && npm run audit:data && npm run build",
+    "bundle:check": "node --experimental-strip-types scripts/check-bundle-size.ts",
+    "check": "npm run lint && npm run test && npm run audit:data && npm run build && npm run bundle:check",
     "preview": "vite preview"
   },
   "dependencies": {

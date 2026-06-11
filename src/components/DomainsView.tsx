@@ -1,16 +1,39 @@
-import React, { useState, type ComponentType } from 'react';
+import React, { useState } from 'react';
 import { domainsData, performanceDomainMnemonic } from '../data/performanceDomains';
-import * as LucideIcons from 'lucide-react';
+import {
+  BarChart3,
+  Briefcase,
+  CheckCircle2,
+  CheckSquare,
+  GitBranch,
+  HelpCircle,
+  Lightbulb,
+  Map,
+  Network,
+  Quote,
+  Star,
+  Target,
+  Users,
+  type LucideIcon
+} from 'lucide-react';
 import './DomainsView.css';
 
-type IconComponentType = ComponentType<{ size?: number; className?: string }>;
-const iconComponents = LucideIcons as unknown as Record<string, IconComponentType>;
+const iconComponents: Record<string, LucideIcon> = {
+  BarChart3,
+  Briefcase,
+  CheckSquare,
+  GitBranch,
+  HelpCircle,
+  Map,
+  Network,
+  Users
+};
 
 const DomainsView: React.FC = () => {
   const [activeId, setActiveId] = useState<string>(domainsData[0].id);
 
   const activeDomain = domainsData.find(d => d.id === activeId) || domainsData[0];
-  const IconComponent = iconComponents[activeDomain.icon] || LucideIcons.HelpCircle;
+  const IconComponent = iconComponents[activeDomain.icon] || HelpCircle;
 
   return (
     <div className="domains-container">
@@ -18,7 +41,7 @@ const DomainsView: React.FC = () => {
       <aside className="mnemonic-sidebar">
         <div className="mnemonic-header">
           <div className="mnemonic-title">
-            <LucideIcons.Quote size={18} /> 助记口诀
+            <Quote size={18} /> 助记口诀
           </div>
           <div className="mnemonic-text">
             {performanceDomainMnemonic}
@@ -53,7 +76,7 @@ const DomainsView: React.FC = () => {
         {/* 1. 预期目标与指标及检查方法 — 一对一映射表 */}
         <div className="detail-section">
           <div className="section-title">
-            <LucideIcons.Target className="section-title-icon" size={20} />
+            <Target className="section-title-icon" size={20} />
             预期目标与指标及检查方法
           </div>
           <div className="goals-table-wrapper">
@@ -68,7 +91,7 @@ const DomainsView: React.FC = () => {
                 {activeDomain.goalsAndChecks.map((gc, index) => (
                   <tr key={index}>
                     <td className="goal-cell">
-                      <LucideIcons.CheckCircle2 size={16} className="goal-icon" />
+                      <CheckCircle2 size={16} className="goal-icon" />
                       {gc.goal}
                     </td>
                     <td className="check-cell">{gc.check}</td>
@@ -82,14 +105,14 @@ const DomainsView: React.FC = () => {
         {/* 2. 绩效要点 */}
         <div className="detail-section">
           <div className="section-title">
-            <LucideIcons.Star className="section-title-icon" size={20} />
+            <Star className="section-title-icon" size={20} />
             绩效要点
           </div>
           <div className="keypoints-block">
             <div className="keypoints-text">{activeDomain.keyPoints}</div>
             {activeDomain.mnemonic && (
               <div className="mnemonic-badge">
-                <LucideIcons.Lightbulb size={16} />
+                <Lightbulb size={16} />
                 速记词：{activeDomain.mnemonic}
               </div>
             )}

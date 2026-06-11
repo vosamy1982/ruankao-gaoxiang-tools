@@ -1,18 +1,19 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import pmbokDataJson from './data/pmbok.json';
 import examDataJson from './data/exam-points.json';
 import type { ExamChapter, PmbokData, Process } from './types';
-import MatrixView from './components/MatrixView';
-import SearchView from './components/SearchView';
-import ProcessMatrixView from './components/ProcessMatrixView';
-import ProcessDetail from './components/ProcessDetail';
-import DocumentListView from './components/DocumentListView';
-import DomainsView from './components/DomainsView';
-import ExamPointsView from './components/ExamPointsView';
-import AdminView from './components/AdminView';
-import ConceptsView from './components/ConceptsView';
 import { LayoutGrid, Search, BookOpen, Layers, PieChart, BookOpenText, Settings, Lightbulb } from 'lucide-react';
 import './App.css';
+
+const MatrixView = lazy(() => import('./components/MatrixView'));
+const SearchView = lazy(() => import('./components/SearchView'));
+const ProcessMatrixView = lazy(() => import('./components/ProcessMatrixView'));
+const ProcessDetail = lazy(() => import('./components/ProcessDetail'));
+const DocumentListView = lazy(() => import('./components/DocumentListView'));
+const DomainsView = lazy(() => import('./components/DomainsView'));
+const ExamPointsView = lazy(() => import('./components/ExamPointsView'));
+const AdminView = lazy(() => import('./components/AdminView'));
+const ConceptsView = lazy(() => import('./components/ConceptsView'));
 
 // 强制转换以匹配类型
 const pmbokData = pmbokDataJson as PmbokData;
@@ -24,6 +25,13 @@ const getViewFromHash = (): ViewMode => {
   const hashView = window.location.hash.replace('#', '');
   return viewModes.includes(hashView as ViewMode) ? hashView as ViewMode : 'mapping';
 };
+
+const ViewLoadingState = () => (
+  <div className="view-loading" role="status" aria-live="polite">
+    <span className="view-loading-spinner" aria-hidden="true" />
+    <span>正在加载当前视图...</span>
+  </div>
+);
 
 function App() {
   const [view, setView] = useState<ViewMode>(getViewFromHash); // 默认展示宏观映射矩阵
@@ -122,31 +130,36 @@ function App() {
       </header>
 
       <main className="app-wrapper">
-        {view === 'mapping' ? (
-          <ProcessMatrixView data={pmbokData} />
-        ) : view === 'matrix' ? (
-          <MatrixView data={pmbokData} onSelectProcess={setSelectedProcess} />
-        ) : view === 'search' ? (
-          <SearchView data={pmbokData} onSelectProcess={setSelectedProcess} />
-        ) : view === 'documents' ? (
-          <DocumentListView />
-        ) : view === 'eightDomains' ? (
-          <DomainsView />
-        ) : view === 'admin' ? (
-          <AdminView chapters={examChapters} setChapters={setExamChapters} />
-        ) : view === 'concepts' ? (
-          <ConceptsView />
-        ) : (
-          <ExamPointsView sourceChapters={examChapters} />
-        )}
+        <Suspense fallback={<ViewLoadingState />}>
+          {view === 'mapping' ? (
+            <ProcessMatrixView data={pmbokData} />
+          ) : view === 'matrix' ? (
+            <MatrixView data={pmbokData} onSelectProcess={setSelectedProcess} />
+          ) : view === 'search' ? (
+            <SearchView data={pmbokData} onSelectProcess={setSelectedProcess} />
+          ) : view === 'documents' ? (
+            <DocumentListView />
+          ) : view === 'eightDomains' ? (
+            <DomainsView />
+          ) : view === 'admin' ? (
+            <AdminView chapters={examChapters} setChapters={setExamChapters} />
+          ) : view === 'concepts' ? (
+            <ConceptsView />
+          ) : (
+            <ExamPointsView sourceChapters={examChapters} />
+          )}
+        </Suspense>
       </main>
 
-      {/* 详情弹窗 */}
-      <ProcessDetail
-        process={selectedProcess}
-        knowledgeArea={activeKnowledgeArea}
-        onClose={() => setSelectedProcess(null)}
-      />
+      {selectedProcess && (
+        <Suspense fallback={null}>
+          <ProcessDetail
+            process={selectedProcess}
+            knowledgeArea={activeKnowledgeArea}
+            onClose={() => setSelectedProcess(null)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

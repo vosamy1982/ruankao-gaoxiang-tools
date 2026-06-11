@@ -39,6 +39,7 @@ https://vosamy1982.github.io/ruankao-gaoxiang-tools/
 - 浏览器内导入、校验、编辑和导出私有考点 JSON
 - 开发模式下保存源码数据与粘贴图片上传
 - 自动检查数据结构、图片资源和内容合规风险
+- 按视图加载前端代码，管理后台与 Markdown 编辑器按需下载
 
 ## 快速开始
 
@@ -62,7 +63,7 @@ npm run preview
 npm run check
 ```
 
-也可以分别执行 `npm run lint`、`npm test`、`npm run audit:data` 和 `npm run build`。
+也可以分别执行 `npm run lint`、`npm test`、`npm run audit:data`、`npm run build` 和 `npm run bundle:check`。
 
 ## 使用说明
 
@@ -110,6 +111,10 @@ npm run check
 
 当前公开数据的审计基线见 `docs/content-audit.md`。自动检查只能发现明显风险，不能替代人工版权审阅。
 
+## 性能基线
+
+顶层视图按 hash 路由加载，打开普通查询页面时不会下载 Markdown 管理后台。构建产物的初始入口和单块体积由 CI 自动检查，详细数据见 `docs/performance.md`。
+
 ## 开发期内容维护
 
 `vite.config.ts` 中包含两个仅用于本地开发服务器的接口：
@@ -129,7 +134,7 @@ npm run check
 
 请阅读 `CONTRIBUTING.md`。本项目只接受原创或明确授权可再分发的学习内容。
 
-每个 Pull Request 都会在 Node.js 24 环境执行数据审计、测试、Lint 和生产构建。
+每个 Pull Request 都会在 Node.js 24 环境执行数据审计、测试、Lint、生产构建和包体积检查。
 
 ## 维护状态
 
