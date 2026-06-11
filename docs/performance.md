@@ -1,0 +1,38 @@
+# 前端性能基线
+
+记录日期：2026-06-11
+
+## 优化范围
+
+- 顶层视图使用 `React.lazy` 和 `Suspense` 按 hash 路由加载。
+- Markdown 管理后台仅在打开 `#admin` 时加载。
+- 后台编辑器使用无 Prism 高亮入口；右侧自定义预览仍支持 Markdown 和 GFM。
+- 绩效域页面仅导入实际使用的 Lucide 图标，避免整个图标库进入产物。
+- CI 对初始入口和任意 JavaScript 块执行体积门禁。
+
+## 构建对比
+
+| 指标 | v0.3.0 | v0.4.0 |
+|---|---:|---:|
+| 初始 JavaScript | 1,958.61 KB | 241.60 KB |
+| 初始 JavaScript gzip | 605.12 KB | 75.63 KB |
+| 最大按需块 | 1,958.61 KB | 281.46 KB |
+| Vite 大块警告 | 有 | 无 |
+
+初始 JavaScript 原始体积和 gzip 体积均减少约 88%。
+
+## 自动门禁
+
+先执行生产构建，再检查包体积：
+
+```bash
+npm run build
+npm run bundle:check
+```
+
+当前阈值：
+
+- 初始入口不超过 300 KiB。
+- 任意 JavaScript 块不超过 500 KiB。
+
+完整质量检查可使用 `npm run check`。

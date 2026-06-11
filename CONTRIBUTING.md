@@ -54,5 +54,6 @@ Do not submit:
 - `npm test` passes.
 - `npm run audit:data` passes.
 - `npm run build` passes.
+- `npm run bundle:check` passes.
 - Documentation is updated when behavior or data format changes.
 - Any new study content is original or clearly licensed for redistribution.
