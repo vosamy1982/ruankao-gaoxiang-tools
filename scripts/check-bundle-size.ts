@@ -1,4 +1,4 @@
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
@@ -23,11 +23,10 @@ const collectJavaScriptAssets = async () => {
   for (const filename of filenames) {
     if (!filename.endsWith('.js')) continue;
     const filePath = resolve(assetsRoot, filename);
-    const fileStat = await stat(filePath);
     const content = await readFile(filePath);
     assets.push({
       file: `assets/${filename}`,
-      bytes: fileStat.size,
+      bytes: content.length,
       gzipBytes: gzipSync(content).length
     });
   }
@@ -37,10 +36,10 @@ const collectJavaScriptAssets = async () => {
 
 const findInitialEntry = async (assets: BundleAsset[]) => {
   const indexHtml = await readFile(resolve(distRoot, 'index.html'), 'utf8');
-  const moduleScript = Array.from(indexHtml.matchAll(/<script\b[^>]*>/g))
+  const moduleScript = Array.from(indexHtml.matchAll(/<script\b[^>]*>/gi))
     .map(match => match[0])
-    .find(tag => /\btype=["']module["']/.test(tag));
-  const sourceMatch = moduleScript?.match(/\bsrc=["']([^"']+\.js)["']/);
+    .find(tag => /\btype=["']module["']/i.test(tag));
+  const sourceMatch = moduleScript?.match(/\bsrc=["']([^"']+\.js)["']/i);
   if (!sourceMatch) {
     throw new Error('Unable to identify the initial module script in dist/index.html');
   }
