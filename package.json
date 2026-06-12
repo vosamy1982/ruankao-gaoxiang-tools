@@ -1,7 +1,7 @@
 {
   "name": "ruankao-gaoxiang-tools",
   "private": false,
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A local-first study and ITTO query tool for the Ruankao advanced project management exam.",
   "license": "MIT",
   "type": "module",
@@ -30,15 +30,16 @@
     "lint": "eslint .",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "audit:data": "node --experimental-strip-types scripts/audit-data.ts",
+    "audit:dependencies": "npm audit --omit=dev --audit-level=moderate --registry=https://registry.npmjs.org",
     "bundle:check": "node --experimental-strip-types scripts/check-bundle-size.ts",
-    "check": "npm run lint && npm run test && npm run audit:data && npm run build && npm run bundle:check",
+    "check": "npm run lint && npm run test && npm run audit:data && npm run audit:dependencies && npm run build && npm run bundle:check",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@uiw/react-md-editor": "^4.1.0",
-    "lucide-react": "^1.8.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "@uiw/react-md-editor": "^4.1.1",
+    "lucide-react": "^1.17.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "react-markdown": "^10.1.0",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1"
@@ -46,17 +47,17 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@types/formidable": "^3.5.1",
-    "@types/node": "^24.12.2",
-    "@types/react": "^19.2.14",
+    "@types/node": "^24.13.2",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
+    "@vitejs/plugin-react": "^6.0.2",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "formidable": "^3.5.4",
-    "globals": "^17.4.0",
+    "globals": "^17.6.0",
     "typescript": "~6.0.2",
-    "typescript-eslint": "^8.58.0",
-    "vite": "^8.0.4"
+    "typescript-eslint": "^8.61.0",
+    "vite": "^8.0.16"
   }
 }

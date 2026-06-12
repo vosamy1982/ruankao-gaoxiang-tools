@@ -53,6 +53,7 @@ Do not submit:
 - `npm run lint` passes.
 - `npm test` passes.
 - `npm run audit:data` passes.
+- `npm run audit:dependencies` passes.
 - `npm run build` passes.
 - `npm run bundle:check` passes.
 - Documentation is updated when behavior or data format changes.
