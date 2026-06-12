@@ -19,8 +19,12 @@ function apiPlugin() {
           req.on('end', () => {
             try {
               const dataPath = path.resolve(__dirname, 'src/data/exam-points.json');
-              if (fs.existsSync(dataPath)) {
+              try {
                 fs.copyFileSync(dataPath, dataPath + '.bak');
+              } catch (error) {
+                if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+                  throw error;
+                }
               }
               fs.writeFileSync(dataPath, JSON.stringify(JSON.parse(body), null, 2), 'utf-8');
               res.statusCode = 200;
