@@ -37,3 +37,13 @@ export interface ExamChapter {
   title: string;
   points: ExamPoint[];
 }
+
+export type StudyStatus = 'not-started' | 'studying' | 'mastered';
+
+export interface StudyRecord {
+  favorite: boolean;
+  status: StudyStatus;
+  updatedAt: string;
+}
+
+export type StudyRecords = Record<string, StudyRecord>;
