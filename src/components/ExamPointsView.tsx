@@ -1,11 +1,50 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { processExamChapters } from '../services/ExamDataManager';
-import type { ExamChapter } from '../types';
-import { ChevronRight, ChevronDown, Star, Beaker, FileText, BookOpenText, Search, X } from 'lucide-react';
+import {
+  MAX_STUDY_DATA_FILE_SIZE,
+  createStudyData,
+  createStudyDataFilename,
+  getStudySummary,
+  loadStudyRecords,
+  saveStudyRecords,
+  setStudyRecord,
+  validateStudyData
+} from '../services/StudyProgress';
+import type { ExamChapter, StudyRecords, StudyStatus } from '../types';
+import {
+  Beaker,
+  BookOpenText,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Circle,
+  Download,
+  FileText,
+  Heart,
+  Search,
+  Star,
+  Timer,
+  Trash2,
+  Upload,
+  X
+} from 'lucide-react';
 import { ExamPointRenderer } from './ExamPointRenderer';
 import './ExamPointsView.css';
 
 const getPointUniqueId = (chapterId: string, pointId: string, uniqueId?: string) => uniqueId ?? `${chapterId}_${pointId}`;
+const defaultStudyRecord = { favorite: false, status: 'not-started' as const };
+
+type StudyFilter = 'all' | 'favorites' | StudyStatus;
+
+const studyStatusOptions: Array<{
+  value: StudyStatus;
+  label: string;
+  icon: typeof Circle;
+}> = [
+  { value: 'not-started', label: '未学习', icon: Circle },
+  { value: 'studying', label: '学习中', icon: Timer },
+  { value: 'mastered', label: '已掌握', icon: CheckCircle2 }
+];
 
 interface ExamPointsViewProps {
   sourceChapters: ExamChapter[];
@@ -13,7 +52,19 @@ interface ExamPointsViewProps {
 
 export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) {
   const chapters = useMemo(() => processExamChapters(sourceChapters), [sourceChapters]);
+  const allPointIds = useMemo(
+    () => chapters.flatMap(chapter =>
+      chapter.points.map(point => getPointUniqueId(chapter.id, point.id, point.uniqueId))
+    ),
+    [chapters]
+  );
+  const allowedPointIds = useMemo(() => new Set(allPointIds), [allPointIds]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [studyFilter, setStudyFilter] = useState<StudyFilter>('all');
+  const [studyRecords, setStudyRecords] = useState<StudyRecords>(() =>
+    loadStudyRecords(window.localStorage, allowedPointIds)
+  );
+  const [studyMessage, setStudyMessage] = useState('');
   const [selectedUniqueId, setSelectedUniqueId] = useState<string | null>(
     chapters[0]?.points[0]
       ? getPointUniqueId(chapters[0].id, chapters[0].points[0].id, chapters[0].points[0].uniqueId)
@@ -21,6 +72,12 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
   );
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set([chapters[0]?.id]));
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const studyImportInputRef = useRef<HTMLInputElement>(null);
+
+  const studySummary = useMemo(
+    () => getStudySummary(studyRecords, allPointIds),
+    [allPointIds, studyRecords]
+  );
   
   const selectedPoint = useMemo(() => {
     if (!selectedUniqueId) return null;
@@ -30,27 +87,37 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
     }
     return null;
   }, [chapters, selectedUniqueId]);
+
+  const selectedStudyRecord = selectedUniqueId
+    ? studyRecords[selectedUniqueId] ?? defaultStudyRecord
+    : defaultStudyRecord;
   
   const filteredChapters = useMemo(() => {
-    if (!searchTerm.trim()) return chapters;
     const term = searchTerm.toLowerCase();
     
     return chapters.map(chapter => {
-      const filteredPoints = chapter.points.filter(point => 
-        point.title.toLowerCase().includes(term) || 
-        point.content.toLowerCase().includes(term)
-      );
+      const filteredPoints = chapter.points.filter(point => {
+        const pointUniqueId = getPointUniqueId(chapter.id, point.id, point.uniqueId);
+        const record = studyRecords[pointUniqueId] ?? defaultStudyRecord;
+        const matchesSearch = !term.trim()
+          || point.title.toLowerCase().includes(term)
+          || point.content.toLowerCase().includes(term);
+        const matchesFilter = studyFilter === 'all'
+          || (studyFilter === 'favorites' && record.favorite)
+          || (studyFilter !== 'favorites' && record.status === studyFilter);
+        return matchesSearch && matchesFilter;
+      });
       if (filteredPoints.length > 0) return { ...chapter, points: filteredPoints };
       return null;
     }).filter(Boolean) as ExamChapter[];
-  }, [chapters, searchTerm]);
+  }, [chapters, searchTerm, studyFilter, studyRecords]);
 
   const visibleExpandedChapters = useMemo(() => {
-    if (!searchTerm.trim()) return expandedChapters;
+    if (!searchTerm.trim() && studyFilter === 'all') return expandedChapters;
     const next = new Set(expandedChapters);
     filteredChapters.forEach(c => next.add(c.id));
     return next;
-  }, [expandedChapters, filteredChapters, searchTerm]);
+  }, [expandedChapters, filteredChapters, searchTerm, studyFilter]);
 
   // Handle auto-scroll to selected point
   useEffect(() => {
@@ -80,6 +147,86 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
       newExpanded.add(chapterId);
     }
     setExpandedChapters(newExpanded);
+  };
+
+  const commitStudyRecords = (records: StudyRecords) => {
+    try {
+      saveStudyRecords(window.localStorage, records);
+      setStudyRecords(records);
+      return true;
+    } catch {
+      setStudyMessage('学习记录保存失败，请检查浏览器存储空间');
+      return false;
+    }
+  };
+
+  const updateSelectedStudyRecord = (
+    updates: Partial<{ favorite: boolean; status: StudyStatus }>
+  ) => {
+    if (!selectedUniqueId) return;
+    commitStudyRecords(setStudyRecord(studyRecords, selectedUniqueId, updates));
+  };
+
+  const handleStudyImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (file.size > MAX_STUDY_DATA_FILE_SIZE) {
+      setStudyMessage('导入失败：学习记录文件不能超过 1 MB');
+      return;
+    }
+
+    try {
+      const result = validateStudyData(JSON.parse(await file.text()) as unknown, allowedPointIds);
+      if (!result.success) {
+        const details = result.errors.slice(0, 3).join('；');
+        const remainder = result.errors.length > 3 ? `；另有 ${result.errors.length - 3} 个错误` : '';
+        setStudyMessage(`导入失败：${details}${remainder}`);
+        return;
+      }
+      if (
+        Object.keys(studyRecords).length > 0
+        && !confirm('导入将替换当前学习记录，确定继续吗？')
+      ) {
+        return;
+      }
+      if (commitStudyRecords(result.data.records)) {
+        setStudyMessage(`导入成功：${Object.keys(result.data.records).length} 条学习记录`);
+      }
+    } catch (error) {
+      setStudyMessage(`导入失败：${error instanceof SyntaxError ? 'JSON 格式无效' : String(error)}`);
+    }
+  };
+
+  const handleStudyExport = () => {
+    const blob = new Blob(
+      [JSON.stringify(createStudyData(studyRecords), null, 2)],
+      { type: 'application/json' }
+    );
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = createStudyDataFilename();
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    setStudyMessage(`已导出 ${Object.keys(studyRecords).length} 条学习记录`);
+  };
+
+  const handleClearStudyRecords = () => {
+    if (Object.keys(studyRecords).length === 0) {
+      setStudyMessage('当前没有需要清空的学习记录');
+      return;
+    }
+    if (!confirm('确定清空全部收藏和学习状态吗？此操作不可撤销。')) {
+      return;
+    }
+    if (commitStudyRecords({})) {
+      setStudyFilter('all');
+      setStudyMessage('学习记录已清空');
+    }
   };
 
   const renderStars = (count: number) => {
@@ -144,10 +291,91 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
           )}
         </div>
 
+        <div className="study-summary" aria-label="学习进度">
+          <div className="study-summary-header">
+            <span>学习进度</span>
+            <strong>{studySummary.mastered}/{studySummary.total}</strong>
+          </div>
+          <div className="study-progress-track" aria-hidden="true">
+            <span style={{ width: `${studySummary.masteredPercent}%` }} />
+          </div>
+          <div className="study-summary-meta">
+            <span>{studySummary.masteredPercent}% 已掌握</span>
+            <span>学习中 {studySummary.studying}</span>
+            <span>收藏 {studySummary.favorites}</span>
+          </div>
+        </div>
+
+        <div className="study-toolbar">
+          <label className="study-filter-label">
+            <span>筛选</span>
+            <select
+              className="study-filter-select"
+              value={studyFilter}
+              onChange={event => setStudyFilter(event.target.value as StudyFilter)}
+            >
+              <option value="all">全部考点</option>
+              <option value="favorites">仅看收藏</option>
+              <option value="not-started">未学习</option>
+              <option value="studying">学习中</option>
+              <option value="mastered">已掌握</option>
+            </select>
+          </label>
+          <div className="study-data-actions">
+            <input
+              ref={studyImportInputRef}
+              type="file"
+              accept=".json,application/json"
+              hidden
+              onChange={handleStudyImport}
+            />
+            <button
+              type="button"
+              className="study-icon-button"
+              title="导入学习记录"
+              aria-label="导入学习记录"
+              onClick={() => studyImportInputRef.current?.click()}
+            >
+              <Upload size={16} />
+            </button>
+            <button
+              type="button"
+              className="study-icon-button"
+              title="导出学习记录"
+              aria-label="导出学习记录"
+              onClick={handleStudyExport}
+            >
+              <Download size={16} />
+            </button>
+            <button
+              type="button"
+              className="study-icon-button danger"
+              title="清空学习记录"
+              aria-label="清空学习记录"
+              onClick={handleClearStudyRecords}
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        </div>
+
+        {studyMessage && (
+          <div className="study-message" role="status">
+            <span>{studyMessage}</span>
+            <button
+              type="button"
+              aria-label="关闭提示"
+              onClick={() => setStudyMessage('')}
+            >
+              <X size={13} />
+            </button>
+          </div>
+        )}
+
         <div className="tree-navigation">
           {filteredChapters.length === 0 ? (
              <div className="sidebar-empty-state">
-               未找到包含“{searchTerm}”的考点
+               没有符合当前搜索和筛选条件的考点
              </div>
           ) : (
             filteredChapters.map(chapter => {
@@ -167,6 +395,7 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
                     {chapter.points.map(point => {
                       const pointUniqueId = getPointUniqueId(chapter.id, point.id, point.uniqueId);
                       const isSelected = selectedUniqueId === pointUniqueId;
+                      const studyRecord = studyRecords[pointUniqueId] ?? defaultStudyRecord;
                       return (
                         <div
                           key={pointUniqueId}
@@ -180,7 +409,21 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
                               {highlightText(point.title, searchTerm)}
                             </span>
                           </div>
-                          {renderStars(point.importance)}
+                          <div className="point-item-indicators">
+                            {studyRecord.favorite && (
+                              <Heart
+                                size={14}
+                                className="point-favorite-indicator"
+                                fill="currentColor"
+                                aria-label="已收藏"
+                              />
+                            )}
+                            <span
+                              className={`point-status-indicator ${studyRecord.status}`}
+                              title={studyStatusOptions.find(option => option.value === studyRecord.status)?.label}
+                            />
+                            {renderStars(point.importance)}
+                          </div>
                         </div>
                       );
                     })}
@@ -198,13 +441,46 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
           <div className="point-article glass-panel slide-up">
             <header className="article-header">
               <div className="article-header-inner">
-                <h1 className="article-title">{selectedPoint.title}</h1>
-                {selectedPoint.importance > 0 && (
-                  <div className="article-meta">
-                    <span className="importance-label">考点重要度:</span>
-                    {renderStars(selectedPoint.importance)}
+                <div className="article-title-row">
+                  <h1 className="article-title">{selectedPoint.title}</h1>
+                  <button
+                    type="button"
+                    className={`favorite-button ${selectedStudyRecord.favorite ? 'active' : ''}`}
+                    aria-pressed={selectedStudyRecord.favorite}
+                    onClick={() => updateSelectedStudyRecord({
+                      favorite: !selectedStudyRecord.favorite
+                    })}
+                  >
+                    <Heart size={18} fill={selectedStudyRecord.favorite ? 'currentColor' : 'none'} />
+                    {selectedStudyRecord.favorite ? '已收藏' : '收藏'}
+                  </button>
+                </div>
+                <div className="article-study-controls">
+                  {selectedPoint.importance > 0 && (
+                    <div className="article-meta">
+                      <span className="importance-label">考点重要度:</span>
+                      {renderStars(selectedPoint.importance)}
+                    </div>
+                  )}
+                  <div className="study-status-control" aria-label="学习状态">
+                    {studyStatusOptions.map(option => {
+                      const Icon = option.icon;
+                      const isActive = selectedStudyRecord.status === option.value;
+                      return (
+                        <button
+                          type="button"
+                          key={option.value}
+                          className={`study-status-button ${option.value} ${isActive ? 'active' : ''}`}
+                          aria-pressed={isActive}
+                          onClick={() => updateSelectedStudyRecord({ status: option.value })}
+                        >
+                          <Icon size={15} />
+                          {option.label}
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
+                </div>
               </div>
             </header>
             <div className="article-body">
