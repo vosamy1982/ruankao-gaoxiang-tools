@@ -19,6 +19,8 @@ export interface StudySummary {
   masteredPercent: number;
 }
 
+export type ReviewQueueKind = 'smart' | 'not-started' | 'studying' | 'favorites';
+
 export type StudyDataValidationResult =
   | { success: true; data: StudyDataFile }
   | { success: false; errors: string[] };
@@ -212,6 +214,71 @@ export const getStudySummary = (
     favorites,
     masteredPercent: total === 0 ? 0 : Math.round((mastered / total) * 100)
   };
+};
+
+export const createReviewQueue = (
+  kind: ReviewQueueKind,
+  pointIds: readonly string[],
+  records: StudyRecords
+): string[] => {
+  if (kind === 'not-started') {
+    return pointIds.filter(pointId => !records[pointId] || records[pointId].status === 'not-started');
+  }
+  if (kind === 'studying') {
+    return pointIds.filter(pointId => records[pointId]?.status === 'studying');
+  }
+  if (kind === 'favorites') {
+    return pointIds.filter(pointId => records[pointId]?.favorite);
+  }
+
+  const studying: string[] = [];
+  const favoriteNotMastered: string[] = [];
+  const notStarted: string[] = [];
+
+  pointIds.forEach(pointId => {
+    const record = records[pointId];
+    if (record?.status === 'studying') {
+      studying.push(pointId);
+    } else if (record?.favorite && record.status !== 'mastered') {
+      favoriteNotMastered.push(pointId);
+    } else if (!record || record.status === 'not-started') {
+      notStarted.push(pointId);
+    }
+  });
+
+  return [...studying, ...favoriteNotMastered, ...notStarted];
+};
+
+export const getAdjacentReviewPointId = (
+  queue: readonly string[],
+  currentPointId: string | null,
+  direction: 'previous' | 'next'
+): string | null => {
+  if (queue.length === 0) return null;
+  const currentIndex = currentPointId ? queue.indexOf(currentPointId) : -1;
+  if (currentIndex === -1) {
+    return direction === 'next' ? queue[0] : queue[queue.length - 1];
+  }
+  const targetIndex = currentIndex + (direction === 'next' ? 1 : -1);
+  return queue[targetIndex] ?? null;
+};
+
+export const getRandomReviewPointId = (
+  queue: readonly string[],
+  currentPointId: string | null,
+  random = Math.random
+): string | null => {
+  if (queue.length === 0) return null;
+  if (queue.length === 1) return queue[0];
+
+  const currentIndex = currentPointId ? queue.indexOf(currentPointId) : -1;
+  if (currentIndex === -1) {
+    return queue[Math.min(queue.length - 1, Math.floor(random() * queue.length))];
+  }
+
+  const randomIndex = Math.min(queue.length - 2, Math.floor(random() * (queue.length - 1)));
+  const targetIndex = randomIndex >= currentIndex ? randomIndex + 1 : randomIndex;
+  return queue[targetIndex];
 };
 
 export const createStudyDataFilename = (date = new Date()) =>

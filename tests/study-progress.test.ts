@@ -3,8 +3,11 @@ import test from 'node:test';
 import {
   STUDY_STORAGE_KEY,
   clearStudyRecords,
+  createReviewQueue,
   createStudyData,
   createStudyDataFilename,
+  getAdjacentReviewPointId,
+  getRandomReviewPointId,
   getStudySummary,
   loadStudyRecords,
   saveStudyRecords,
@@ -139,4 +142,54 @@ test('loads, saves, and clears browser storage safely', () => {
 
 test('creates a stable dated study export filename', () => {
   assert.equal(createStudyDataFilename(date), 'study-progress-2026-06-13.json');
+});
+
+test('creates focused review queues from study records', () => {
+  const pointIds = ['p1', 'p2', 'p3', 'p4', 'p5'];
+  const records = {
+    p1: {
+      favorite: false,
+      status: 'mastered' as const,
+      updatedAt: date.toISOString()
+    },
+    p2: {
+      favorite: false,
+      status: 'studying' as const,
+      updatedAt: date.toISOString()
+    },
+    p3: {
+      favorite: true,
+      status: 'not-started' as const,
+      updatedAt: date.toISOString()
+    },
+    p4: {
+      favorite: true,
+      status: 'mastered' as const,
+      updatedAt: date.toISOString()
+    }
+  };
+
+  assert.deepEqual(createReviewQueue('smart', pointIds, records), ['p2', 'p3', 'p5']);
+  assert.deepEqual(createReviewQueue('studying', pointIds, records), ['p2']);
+  assert.deepEqual(createReviewQueue('not-started', pointIds, records), ['p3', 'p5']);
+  assert.deepEqual(createReviewQueue('favorites', pointIds, records), ['p3', 'p4']);
+});
+
+test('navigates review queues without wrapping', () => {
+  const queue = ['p1', 'p2', 'p3'];
+
+  assert.equal(getAdjacentReviewPointId(queue, 'p2', 'previous'), 'p1');
+  assert.equal(getAdjacentReviewPointId(queue, 'p2', 'next'), 'p3');
+  assert.equal(getAdjacentReviewPointId(queue, 'p1', 'previous'), null);
+  assert.equal(getAdjacentReviewPointId(queue, 'p3', 'next'), null);
+  assert.equal(getAdjacentReviewPointId(queue, null, 'next'), 'p1');
+});
+
+test('selects a different random review point when possible', () => {
+  const queue = ['p1', 'p2', 'p3'];
+
+  assert.equal(getRandomReviewPointId(queue, 'p2', () => 0), 'p1');
+  assert.equal(getRandomReviewPointId(queue, 'p2', () => 0.999), 'p3');
+  assert.equal(getRandomReviewPointId(['p1'], 'p1', () => 0), 'p1');
+  assert.equal(getRandomReviewPointId([], null, () => 0), null);
 });
