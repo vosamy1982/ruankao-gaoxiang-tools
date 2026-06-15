@@ -2,16 +2,22 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { processExamChapters } from '../services/ExamDataManager';
 import {
   MAX_STUDY_DATA_FILE_SIZE,
+  createReviewQueue,
   createStudyData,
   createStudyDataFilename,
+  getAdjacentReviewPointId,
+  getRandomReviewPointId,
   getStudySummary,
   loadStudyRecords,
   saveStudyRecords,
   setStudyRecord,
   validateStudyData
 } from '../services/StudyProgress';
+import type { ReviewQueueKind } from '../services/StudyProgress';
 import type { ExamChapter, StudyRecords, StudyStatus } from '../types';
 import {
+  ArrowLeft,
+  ArrowRight,
   Beaker,
   BookOpenText,
   CheckCircle2,
@@ -21,7 +27,9 @@ import {
   Download,
   FileText,
   Heart,
+  Play,
   Search,
+  Shuffle,
   Star,
   Timer,
   Trash2,
@@ -46,6 +54,13 @@ const studyStatusOptions: Array<{
   { value: 'mastered', label: '已掌握', icon: CheckCircle2 }
 ];
 
+const reviewQueueOptions: Array<{ value: ReviewQueueKind; label: string }> = [
+  { value: 'smart', label: '智能复习' },
+  { value: 'studying', label: '学习中' },
+  { value: 'not-started', label: '未学习' },
+  { value: 'favorites', label: '收藏' }
+];
+
 interface ExamPointsViewProps {
   sourceChapters: ExamChapter[];
 }
@@ -59,8 +74,20 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
     [chapters]
   );
   const allowedPointIds = useMemo(() => new Set(allPointIds), [allPointIds]);
+  const pointLocations = useMemo(
+    () => new Map(chapters.flatMap(chapter =>
+      chapter.points.map(point => [
+        getPointUniqueId(chapter.id, point.id, point.uniqueId),
+        { chapterId: chapter.id }
+      ] as const)
+    )),
+    [chapters]
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [studyFilter, setStudyFilter] = useState<StudyFilter>('all');
+  const [reviewQueueKind, setReviewQueueKind] = useState<ReviewQueueKind>('smart');
+  const [activeReviewQueueKind, setActiveReviewQueueKind] = useState<ReviewQueueKind | null>(null);
+  const [activeReviewQueue, setActiveReviewQueue] = useState<string[]>([]);
   const [studyRecords, setStudyRecords] = useState<StudyRecords>(() =>
     loadStudyRecords(window.localStorage, allowedPointIds)
   );
@@ -72,12 +99,23 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
   );
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set([chapters[0]?.id]));
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const articleBodyRef = useRef<HTMLDivElement>(null);
   const studyImportInputRef = useRef<HTMLInputElement>(null);
 
   const studySummary = useMemo(
     () => getStudySummary(studyRecords, allPointIds),
     [allPointIds, studyRecords]
   );
+  const reviewQueuePreview = useMemo(
+    () => createReviewQueue(reviewQueueKind, allPointIds, studyRecords),
+    [allPointIds, reviewQueueKind, studyRecords]
+  );
+  const activeReviewPosition = selectedUniqueId
+    ? activeReviewQueue.indexOf(selectedUniqueId)
+    : -1;
+  const activeReviewLabel = activeReviewQueueKind
+    ? reviewQueueOptions.find(option => option.value === activeReviewQueueKind)?.label
+    : null;
   
   const selectedPoint = useMemo(() => {
     if (!selectedUniqueId) return null;
@@ -93,13 +131,13 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
     : defaultStudyRecord;
   
   const filteredChapters = useMemo(() => {
-    const term = searchTerm.toLowerCase();
+    const term = searchTerm.trim().toLowerCase();
     
     return chapters.map(chapter => {
       const filteredPoints = chapter.points.filter(point => {
         const pointUniqueId = getPointUniqueId(chapter.id, point.id, point.uniqueId);
         const record = studyRecords[pointUniqueId] ?? defaultStudyRecord;
-        const matchesSearch = !term.trim()
+        const matchesSearch = !term
           || point.title.toLowerCase().includes(term)
           || point.content.toLowerCase().includes(term);
         const matchesFilter = studyFilter === 'all'
@@ -129,13 +167,26 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
     }
   }, [selectedUniqueId]);
 
-  const handleSelectPoint = (uniqueId: string, chapterId: string) => {
+  useEffect(() => {
+    articleBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [selectedUniqueId]);
+
+  const selectPointById = (uniqueId: string, clearSearch = true) => {
+    const location = pointLocations.get(uniqueId);
+    if (!location) return false;
     setSelectedUniqueId(uniqueId);
-    // If we are searching, we might want to clear it or keep it?
-    // User requested "find it then operate normally", which implies restoring context.
-    if (searchTerm) {
+    if (clearSearch) {
       setSearchTerm('');
     }
+    setExpandedChapters(prev => new Set(prev).add(location.chapterId));
+    return true;
+  };
+
+  const handleSelectPoint = (uniqueId: string, chapterId: string) => {
+    setActiveReviewQueue([]);
+    setActiveReviewQueueKind(null);
+    setSelectedUniqueId(uniqueId);
+    setSearchTerm('');
     setExpandedChapters(prev => new Set(prev).add(chapterId));
   };
 
@@ -167,6 +218,44 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
     commitStudyRecords(setStudyRecord(studyRecords, selectedUniqueId, updates));
   };
 
+  const handleStartReview = () => {
+    const queue = createReviewQueue(reviewQueueKind, allPointIds, studyRecords);
+    if (queue.length === 0) {
+      const label = reviewQueueOptions.find(option => option.value === reviewQueueKind)?.label;
+      setStudyMessage(`${label ?? '当前'}队列没有可复习的考点`);
+      return;
+    }
+
+    const canResume = activeReviewQueueKind === reviewQueueKind
+      && selectedUniqueId !== null
+      && queue.includes(selectedUniqueId);
+    const startPointId = canResume && selectedUniqueId ? selectedUniqueId : queue[0];
+    setActiveReviewQueue(queue);
+    setActiveReviewQueueKind(reviewQueueKind);
+    selectPointById(startPointId);
+    setStudyMessage(`已生成 ${queue.length} 个考点的复习队列`);
+  };
+
+  const handleReviewNavigation = (direction: 'previous' | 'next') => {
+    const pointId = getAdjacentReviewPointId(activeReviewQueue, selectedUniqueId, direction);
+    if (pointId) {
+      selectPointById(pointId);
+    }
+  };
+
+  const handleRandomReviewPoint = () => {
+    const pointId = getRandomReviewPointId(activeReviewQueue, selectedUniqueId);
+    if (pointId) {
+      selectPointById(pointId);
+    }
+  };
+
+  const handleStopReview = () => {
+    setActiveReviewQueue([]);
+    setActiveReviewQueueKind(null);
+    setStudyMessage('已退出快速复习');
+  };
+
   const handleStudyImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -192,6 +281,8 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
         return;
       }
       if (commitStudyRecords(result.data.records)) {
+        setActiveReviewQueue([]);
+        setActiveReviewQueueKind(null);
         setStudyMessage(`导入成功：${Object.keys(result.data.records).length} 条学习记录`);
       }
     } catch (error) {
@@ -224,6 +315,8 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
       return;
     }
     if (commitStudyRecords({})) {
+      setActiveReviewQueue([]);
+      setActiveReviewQueueKind(null);
       setStudyFilter('all');
       setStudyMessage('学习记录已清空');
     }
@@ -247,17 +340,18 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
   };
 
   const highlightText = (text: string, term: string) => {
-    if (!term.trim()) return text;
+    const normalizedTerm = term.trim();
+    if (!normalizedTerm) return text;
     const lowerText = text.toLowerCase();
-    const lowerTerm = term.toLowerCase();
+    const lowerTerm = normalizedTerm.toLowerCase();
     const index = lowerText.indexOf(lowerTerm);
     if (index === -1) return text;
     
     return (
       <>
         {text.substring(0, index)}
-        <span className="search-highlight">{text.substring(index, index + term.length)}</span>
-        {text.substring(index + term.length)}
+        <span className="search-highlight">{text.substring(index, index + normalizedTerm.length)}</span>
+        {text.substring(index + normalizedTerm.length)}
       </>
     );
   };
@@ -304,6 +398,31 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
             <span>学习中 {studySummary.studying}</span>
             <span>收藏 {studySummary.favorites}</span>
           </div>
+        </div>
+
+        <div className="review-launcher">
+          <label className="review-queue-label">
+            <span>复习队列</span>
+            <select
+              className="review-queue-select"
+              value={reviewQueueKind}
+              onChange={event => setReviewQueueKind(event.target.value as ReviewQueueKind)}
+            >
+              {reviewQueueOptions.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="review-start-button"
+            disabled={reviewQueuePreview.length === 0}
+            onClick={handleStartReview}
+          >
+            <Play size={15} fill="currentColor" />
+            继续学习
+            <span>{reviewQueuePreview.length}</span>
+          </button>
         </div>
 
         <div className="study-toolbar">
@@ -481,9 +600,61 @@ export default function ExamPointsView({ sourceChapters }: ExamPointsViewProps) 
                     })}
                   </div>
                 </div>
+                {activeReviewQueueKind && activeReviewQueue.length > 0 && (
+                  <div className="review-navigation" aria-label="快速复习导航">
+                    <div className="review-navigation-info">
+                      <span>{activeReviewLabel}</span>
+                      <strong>
+                        {activeReviewPosition >= 0 ? activeReviewPosition + 1 : 0}
+                        {' / '}
+                        {activeReviewQueue.length}
+                      </strong>
+                    </div>
+                    <div className="review-navigation-actions">
+                      <button
+                        type="button"
+                        aria-label="上一个考点"
+                        disabled={activeReviewPosition <= 0}
+                        onClick={() => handleReviewNavigation('previous')}
+                      >
+                        <ArrowLeft size={16} />
+                        上一个
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="随机考点"
+                        onClick={handleRandomReviewPoint}
+                      >
+                        <Shuffle size={16} />
+                        随机
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="下一个考点"
+                        disabled={
+                          activeReviewPosition < 0
+                          || activeReviewPosition >= activeReviewQueue.length - 1
+                        }
+                        onClick={() => handleReviewNavigation('next')}
+                      >
+                        下一个
+                        <ArrowRight size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        className="review-stop-button"
+                        aria-label="退出快速复习"
+                        title="退出快速复习"
+                        onClick={handleStopReview}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </header>
-            <div className="article-body">
+            <div className="article-body" ref={articleBodyRef}>
               <div className="article-body-inner">
                 <ExamPointRenderer 
                   content={selectedPoint.content} 

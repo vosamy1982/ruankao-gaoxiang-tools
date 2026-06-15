@@ -1,7 +1,7 @@
 {
   "name": "ruankao-gaoxiang-tools",
   "private": false,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A local-first study and ITTO query tool for the Ruankao advanced project management exam.",
   "license": "MIT",
   "type": "module",
