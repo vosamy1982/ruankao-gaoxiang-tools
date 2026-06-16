@@ -1,8 +1,8 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import pmbokDataJson from './data/pmbok.json';
 import examDataJson from './data/exam-points.json';
 import type { ExamChapter, PmbokData, Process } from './types';
-import { LayoutGrid, Search, BookOpen, Layers, PieChart, BookOpenText, ListChecks, Settings, Lightbulb, Menu, X } from 'lucide-react';
+import { LayoutGrid, Search, BookOpen, Layers, PieChart, BookOpenText, ListChecks, Settings, Lightbulb, Menu, X, ChevronDown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import './App.css';
 
@@ -76,6 +76,9 @@ const navigationGroups: NavigationGroup[] = [
 const getNavigationGroup = (view: ViewMode) =>
   navigationGroups.find(group => group.items.some(item => item.view === view)) ?? navigationGroups[0];
 
+const getNavigationItem = (view: ViewMode) =>
+  navigationGroups.flatMap(group => group.items).find(item => item.view === view) ?? navigationGroups[0].items[0];
+
 const getViewFromHash = (): ViewMode => {
   const hashView = window.location.hash.replace('#', '');
   return viewModes.includes(hashView as ViewMode) ? hashView as ViewMode : 'mapping';
@@ -92,13 +95,16 @@ function App() {
   const [view, setView] = useState<ViewMode>(getViewFromHash); // 默认展示宏观映射矩阵
   const [selectedProcess, setSelectedProcess] = useState<Process | null>(null);
   const [examChapters, setExamChapters] = useState<ExamChapter[]>(examDataJson as ExamChapter[]);
-  const [isNavigationOpen, setIsNavigationOpen] = useState(false);
+  const [openNavigationGroupId, setOpenNavigationGroupId] = useState<NavGroupId | null>(null);
+  const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const handleHashChange = () => {
       setView(getViewFromHash());
       setSelectedProcess(null);
-      setIsNavigationOpen(false);
+      setOpenNavigationGroupId(null);
+      setIsMobileNavigationOpen(false);
     };
 
     window.addEventListener('hashchange', handleHashChange);
@@ -109,9 +115,34 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    const closeNavigation = (event: PointerEvent) => {
+      if (headerRef.current?.contains(event.target as Node)) {
+        return;
+      }
+      setOpenNavigationGroupId(null);
+      setIsMobileNavigationOpen(false);
+    };
+
+    const closeNavigationByKeyboard = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpenNavigationGroupId(null);
+        setIsMobileNavigationOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', closeNavigation);
+    document.addEventListener('keydown', closeNavigationByKeyboard);
+    return () => {
+      document.removeEventListener('pointerdown', closeNavigation);
+      document.removeEventListener('keydown', closeNavigationByKeyboard);
+    };
+  }, []);
+
   const handleViewChange = (nextView: ViewMode) => {
     setSelectedProcess(null);
-    setIsNavigationOpen(false);
+    setOpenNavigationGroupId(null);
+    setIsMobileNavigationOpen(false);
     if (window.location.hash === `#${nextView}`) {
       setView(nextView);
       return;
@@ -124,65 +155,122 @@ function App() {
     ? pmbokData.knowledgeAreas.find(ka => ka.id === selectedProcess.knowledgeAreaId)
     : undefined;
   const activeNavigationGroup = getNavigationGroup(view);
+  const activeNavigationItem = getNavigationItem(view);
 
   return (
     <div className="app-container">
-      <header className="app-header">
-        <div className="app-header-top">
+      <header className="app-header" ref={headerRef}>
+        <div className="app-header-main">
           <div className="app-title">
             <span style={{ fontSize: '1.4rem' }}>📚</span>
             软考高项ITTO查询系统
           </div>
+          <div className="app-current-location" aria-label="当前位置">
+            <span>{activeNavigationGroup.label}</span>
+            <span aria-hidden="true">/</span>
+            <strong>{activeNavigationItem.label}</strong>
+          </div>
           <button
             type="button"
             className="mobile-nav-toggle"
-            aria-expanded={isNavigationOpen}
-            aria-label={isNavigationOpen ? '关闭导航菜单' : '打开导航菜单'}
-            onClick={() => setIsNavigationOpen(open => !open)}
+            aria-expanded={isMobileNavigationOpen}
+            aria-controls="mobile-navigation"
+            aria-label={isMobileNavigationOpen ? '关闭导航菜单' : '打开导航菜单'}
+            onClick={() => {
+              setOpenNavigationGroupId(null);
+              setIsMobileNavigationOpen(open => !open);
+            }}
           >
-            {isNavigationOpen ? <X size={18} /> : <Menu size={18} />}
-            <span>{activeNavigationGroup.label}</span>
+            {isMobileNavigationOpen ? <X size={18} /> : <Menu size={18} />}
+            <span>菜单</span>
           </button>
         </div>
 
+        <nav className="desktop-navigation" aria-label="主导航">
+          {navigationGroups.map(group => {
+            const isActiveGroup = activeNavigationGroup.id === group.id;
+            const isOpen = openNavigationGroupId === group.id;
+            return (
+              <div className="nav-dropdown" key={group.id}>
+                <button
+                  id={`nav-trigger-${group.id}`}
+                  type="button"
+                  className={`nav-dropdown-trigger ${isActiveGroup ? 'active' : ''} ${isOpen ? 'open' : ''}`}
+                  aria-haspopup="menu"
+                  aria-expanded={isOpen}
+                  aria-controls={`nav-menu-${group.id}`}
+                  onClick={() => {
+                    setIsMobileNavigationOpen(false);
+                    setOpenNavigationGroupId(currentGroupId =>
+                      currentGroupId === group.id ? null : group.id
+                    );
+                  }}
+                >
+                  <span>{group.label}</span>
+                  <ChevronDown size={16} aria-hidden="true" />
+                </button>
+                {isOpen && (
+                  <div
+                    id={`nav-menu-${group.id}`}
+                    className="nav-dropdown-menu"
+                    role="menu"
+                    aria-labelledby={`nav-trigger-${group.id}`}
+                  >
+                    {group.items.map(item => {
+                      const Icon = item.icon;
+                      const isActive = view === item.view;
+                      return (
+                        <button
+                          key={item.view}
+                          type="button"
+                          role="menuitem"
+                          className={`nav-dropdown-item ${isActive ? 'active' : ''}`}
+                          aria-current={isActive ? 'page' : undefined}
+                          onClick={() => handleViewChange(item.view)}
+                        >
+                          <Icon size={17} aria-hidden="true" />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+
         <nav
-          className={`app-navigation ${isNavigationOpen ? 'open' : ''}`}
-          aria-label="主导航"
+          id="mobile-navigation"
+          className={`mobile-navigation ${isMobileNavigationOpen ? 'open' : ''}`}
+          aria-label="移动端主导航"
+          hidden={!isMobileNavigationOpen}
         >
-          <div className="primary-nav" aria-label="导航分组">
-            {navigationGroups.map(group => {
-              const isActive = activeNavigationGroup.id === group.id;
-              return (
-                <button
-                  key={group.id}
-                  type="button"
-                  className={`nav-group-btn ${isActive ? 'active' : ''}`}
-                  aria-pressed={isActive}
-                  onClick={() => handleViewChange(group.items[0].view)}
-                >
-                  {group.label}
-                </button>
-              );
-            })}
-          </div>
-          <div className="secondary-nav" aria-label={`${activeNavigationGroup.label}视图`}>
-            {activeNavigationGroup.items.map(item => {
-              const Icon = item.icon;
-              const isActive = view === item.view;
-              return (
-                <button
-                  key={item.view}
-                  type="button"
-                  className={`nav-item-btn ${isActive ? 'active' : ''}`}
-                  aria-current={isActive ? 'page' : undefined}
-                  onClick={() => handleViewChange(item.view)}
-                >
-                  <Icon size={17} />
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
+          {navigationGroups.map(group => (
+            <section className="mobile-nav-section" key={group.id} aria-labelledby={`mobile-nav-${group.id}`}>
+              <div className="mobile-nav-section-title" id={`mobile-nav-${group.id}`}>
+                {group.label}
+              </div>
+              <div className="mobile-nav-items">
+                {group.items.map(item => {
+                  const Icon = item.icon;
+                  const isActive = view === item.view;
+                  return (
+                    <button
+                      key={item.view}
+                      type="button"
+                      className={`mobile-nav-item ${isActive ? 'active' : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                      onClick={() => handleViewChange(item.view)}
+                    >
+                      <Icon size={17} aria-hidden="true" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </nav>
       </header>
 
