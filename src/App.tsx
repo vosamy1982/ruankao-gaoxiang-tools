@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import pmbokDataJson from './data/pmbok.json';
 import examDataJson from './data/exam-points.json';
 import type { ExamChapter, PmbokData, Process } from './types';
-import { LayoutGrid, Search, BookOpen, Layers, PieChart, BookOpenText, Settings, Lightbulb } from 'lucide-react';
+import { LayoutGrid, Search, BookOpen, Layers, PieChart, BookOpenText, ListChecks, Settings, Lightbulb } from 'lucide-react';
 import './App.css';
 
 const MatrixView = lazy(() => import('./components/MatrixView'));
@@ -12,14 +12,15 @@ const ProcessDetail = lazy(() => import('./components/ProcessDetail'));
 const DocumentListView = lazy(() => import('./components/DocumentListView'));
 const DomainsView = lazy(() => import('./components/DomainsView'));
 const ExamPointsView = lazy(() => import('./components/ExamPointsView'));
+const ReviewCenterView = lazy(() => import('./components/ReviewCenterView'));
 const AdminView = lazy(() => import('./components/AdminView'));
 const ConceptsView = lazy(() => import('./components/ConceptsView'));
 
 // 强制转换以匹配类型
 const pmbokData = pmbokDataJson as PmbokData;
-type ViewMode = 'mapping' | 'matrix' | 'search' | 'documents' | 'eightDomains' | 'examPoints' | 'admin' | 'concepts';
+type ViewMode = 'mapping' | 'matrix' | 'search' | 'documents' | 'eightDomains' | 'examPoints' | 'reviewCenter' | 'admin' | 'concepts';
 
-const viewModes: ViewMode[] = ['mapping', 'matrix', 'search', 'documents', 'eightDomains', 'examPoints', 'admin', 'concepts'];
+const viewModes: ViewMode[] = ['mapping', 'matrix', 'search', 'documents', 'eightDomains', 'examPoints', 'reviewCenter', 'admin', 'concepts'];
 
 const getViewFromHash = (): ViewMode => {
   const hashView = window.location.hash.replace('#', '');
@@ -113,6 +114,13 @@ function App() {
             考点精炼阅览
           </button>
           <button
+            className={`toggle-btn ${view === 'reviewCenter' ? 'active' : ''}`}
+            onClick={() => handleViewChange('reviewCenter')}
+          >
+            <ListChecks size={18} />
+            复习中心
+          </button>
+          <button
             className={`toggle-btn ${view === 'admin' ? 'active' : ''}`}
             onClick={() => handleViewChange('admin')}
           >
@@ -145,6 +153,8 @@ function App() {
             <AdminView chapters={examChapters} setChapters={setExamChapters} />
           ) : view === 'concepts' ? (
             <ConceptsView />
+          ) : view === 'reviewCenter' ? (
+            <ReviewCenterView sourceChapters={examChapters} />
           ) : (
             <ExamPointsView sourceChapters={examChapters} />
           )}
