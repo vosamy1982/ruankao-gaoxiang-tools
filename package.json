@@ -1,7 +1,7 @@
 {
   "name": "ruankao-gaoxiang-tools",
   "private": false,
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "A local-first study and ITTO query tool for the Ruankao advanced project management exam.",
   "license": "MIT",
   "type": "module",
@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@uiw/react-md-editor": "^4.1.1",
-    "lucide-react": "^1.18.0",
+    "lucide-react": "^1.21.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-markdown": "^10.1.0",
@@ -57,7 +57,7 @@
     "formidable": "^3.5.4",
     "globals": "^17.6.0",
     "typescript": "~6.0.2",
-    "typescript-eslint": "^8.61.0",
+    "typescript-eslint": "^8.61.1",
     "vite": "^8.0.16"
   }
 }
