@@ -122,6 +122,14 @@
   color: var(--text-main);
 }
 
+.nav-dropdown-trigger:focus-visible,
+.nav-dropdown-item:focus-visible,
+.mobile-nav-toggle:focus-visible,
+.mobile-nav-item:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
 .nav-dropdown-menu {
   position: absolute;
   z-index: 210;
@@ -165,6 +173,11 @@
 }
 
 .nav-dropdown-item:hover:not(.active) {
+  background: #f3f4f6;
+  color: var(--text-main);
+}
+
+.nav-dropdown-item:focus-visible:not(.active) {
   background: #f3f4f6;
   color: var(--text-main);
 }

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import pmbokDataJson from './data/pmbok.json';
 import examDataJson from './data/exam-points.json';
 import type { ExamChapter, PmbokData, Process } from './types';
@@ -98,6 +98,18 @@ function App() {
   const [openNavigationGroupId, setOpenNavigationGroupId] = useState<NavGroupId | null>(null);
   const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+  const dropdownTriggerRefs = useRef<Record<NavGroupId, HTMLButtonElement | null>>({
+    itto: null,
+    study: null,
+    reference: null,
+    admin: null
+  });
+  const dropdownItemRefs = useRef<Record<NavGroupId, Array<HTMLButtonElement | null>>>({
+    itto: [],
+    study: [],
+    reference: [],
+    admin: []
+  });
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -151,6 +163,137 @@ function App() {
     setView(nextView);
   };
 
+  const focusNavigationTrigger = (nextGroupIndex: number) => {
+    const normalizedIndex = (nextGroupIndex + navigationGroups.length) % navigationGroups.length;
+    const nextGroupId = navigationGroups[normalizedIndex].id;
+    dropdownTriggerRefs.current[nextGroupId]?.focus();
+  };
+
+  const focusNavigationItem = (groupId: NavGroupId, nextItemIndex: number) => {
+    const group = navigationGroups.find(candidate => candidate.id === groupId);
+    if (!group) return;
+
+    const normalizedIndex = (nextItemIndex + group.items.length) % group.items.length;
+    dropdownItemRefs.current[groupId][normalizedIndex]?.focus();
+  };
+
+  const openNavigationGroup = (groupId: NavGroupId, focusItemIndex: number) => {
+    setIsMobileNavigationOpen(false);
+    setOpenNavigationGroupId(groupId);
+    window.requestAnimationFrame(() => focusNavigationItem(groupId, focusItemIndex));
+  };
+
+  const closeDesktopNavigation = (returnFocusGroupId?: NavGroupId) => {
+    setOpenNavigationGroupId(null);
+    if (returnFocusGroupId) {
+      window.requestAnimationFrame(() => dropdownTriggerRefs.current[returnFocusGroupId]?.focus());
+    }
+  };
+
+  const handleNavigationTriggerKeyDown = (
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    group: NavigationGroup,
+    groupIndex: number
+  ) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      openNavigationGroup(group.id, 0);
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      openNavigationGroup(group.id, 0);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      openNavigationGroup(group.id, group.items.length - 1);
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      setOpenNavigationGroupId(null);
+      focusNavigationTrigger(groupIndex + 1);
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      setOpenNavigationGroupId(null);
+      focusNavigationTrigger(groupIndex - 1);
+      return;
+    }
+
+    if (event.key === 'Escape' && openNavigationGroupId) {
+      event.preventDefault();
+      closeDesktopNavigation(group.id);
+    }
+  };
+
+  const handleNavigationItemKeyDown = (
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    group: NavigationGroup,
+    groupIndex: number,
+    itemIndex: number
+  ) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleViewChange(group.items[itemIndex].view);
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      focusNavigationItem(group.id, itemIndex + 1);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      focusNavigationItem(group.id, itemIndex - 1);
+      return;
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault();
+      focusNavigationItem(group.id, 0);
+      return;
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault();
+      focusNavigationItem(group.id, group.items.length - 1);
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      const nextGroup = navigationGroups[(groupIndex + 1) % navigationGroups.length];
+      openNavigationGroup(nextGroup.id, 0);
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      const previousGroup = navigationGroups[(groupIndex - 1 + navigationGroups.length) % navigationGroups.length];
+      openNavigationGroup(previousGroup.id, 0);
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeDesktopNavigation(group.id);
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      setOpenNavigationGroupId(null);
+    }
+  };
+
   const activeKnowledgeArea = selectedProcess
     ? pmbokData.knowledgeAreas.find(ka => ka.id === selectedProcess.knowledgeAreaId)
     : undefined;
@@ -187,7 +330,7 @@ function App() {
         </div>
 
         <nav className="desktop-navigation" aria-label="主导航">
-          {navigationGroups.map(group => {
+          {navigationGroups.map((group, groupIndex) => {
             const isActiveGroup = activeNavigationGroup.id === group.id;
             const isOpen = openNavigationGroupId === group.id;
             return (
@@ -195,10 +338,14 @@ function App() {
                 <button
                   id={`nav-trigger-${group.id}`}
                   type="button"
+                  ref={element => {
+                    dropdownTriggerRefs.current[group.id] = element;
+                  }}
                   className={`nav-dropdown-trigger ${isActiveGroup ? 'active' : ''} ${isOpen ? 'open' : ''}`}
                   aria-haspopup="menu"
                   aria-expanded={isOpen}
                   aria-controls={`nav-menu-${group.id}`}
+                  onKeyDown={event => handleNavigationTriggerKeyDown(event, group, groupIndex)}
                   onClick={() => {
                     setIsMobileNavigationOpen(false);
                     setOpenNavigationGroupId(currentGroupId =>
@@ -216,7 +363,7 @@ function App() {
                     role="menu"
                     aria-labelledby={`nav-trigger-${group.id}`}
                   >
-                    {group.items.map(item => {
+                    {group.items.map((item, itemIndex) => {
                       const Icon = item.icon;
                       const isActive = view === item.view;
                       return (
@@ -224,8 +371,12 @@ function App() {
                           key={item.view}
                           type="button"
                           role="menuitem"
+                          ref={element => {
+                            dropdownItemRefs.current[group.id][itemIndex] = element;
+                          }}
                           className={`nav-dropdown-item ${isActive ? 'active' : ''}`}
                           aria-current={isActive ? 'page' : undefined}
+                          onKeyDown={event => handleNavigationItemKeyDown(event, group, groupIndex, itemIndex)}
                           onClick={() => handleViewChange(item.view)}
                         >
                           <Icon size={17} aria-hidden="true" />
