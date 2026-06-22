@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { processExamChapters } from '../services/ExamDataManager';
 import {
+  DAILY_STUDY_TARGETS,
+  completeDailyStudyPoint,
+  createDailyStudyPlan,
+  getDailyStudyProgress,
+  getDailyStudyResumePointId,
+  getNextIncompleteDailyPointId,
+  loadDailyStudyPlan,
+  saveDailyStudyPlan
+} from '../services/DailyStudyPlan';
+import {
   createReviewQueue,
   getAdjacentReviewPointId,
   getRandomReviewPointId,
@@ -15,6 +25,8 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpenCheck,
+  CalendarCheck2,
+  Check,
   Heart,
   Play,
   Shuffle,
@@ -48,6 +60,8 @@ const reviewQueueDescriptions: Record<ReviewQueueKind, string> = {
   favorites: '复习全部收藏考点，包括已经掌握的内容。'
 };
 
+type ActiveReviewQueueKind = ReviewQueueKind | 'daily';
+
 export default function ReviewCenterView({ sourceChapters }: ReviewCenterViewProps) {
   const chapters = useMemo(() => processExamChapters(sourceChapters), [sourceChapters]);
   const pointIndex = useMemo(() => {
@@ -66,13 +80,22 @@ export default function ReviewCenterView({ sourceChapters }: ReviewCenterViewPro
   const allPointIds = useMemo(() => Array.from(pointIndex.keys()), [pointIndex]);
   const allowedPointIds = useMemo(() => new Set(allPointIds), [allPointIds]);
   const [reviewQueueKind, setReviewQueueKind] = useState<ReviewQueueKind>('smart');
-  const [activeReviewQueueKind, setActiveReviewQueueKind] = useState<ReviewQueueKind | null>(null);
+  const [activeReviewQueueKind, setActiveReviewQueueKind] = useState<ActiveReviewQueueKind | null>(null);
   const [activeReviewQueue, setActiveReviewQueue] = useState<string[]>([]);
   const [selectedUniqueId, setSelectedUniqueId] = useState<string | null>(null);
   const [studyRecords, setStudyRecords] = useState<StudyRecords>(() =>
     loadStudyRecords(window.localStorage, allowedPointIds)
   );
   const [studyMessage, setStudyMessage] = useState('');
+  const [dailyStudyPlan, setDailyStudyPlan] = useState(() => {
+    const plan = loadDailyStudyPlan(window.localStorage, allPointIds, studyRecords);
+    try {
+      saveDailyStudyPlan(window.localStorage, plan);
+    } catch {
+      // The next user action will surface a storage error through commitDailyStudyPlan.
+    }
+    return plan;
+  });
   const articleBodyRef = useRef<HTMLDivElement>(null);
 
   const studySummary = useMemo(
@@ -82,6 +105,10 @@ export default function ReviewCenterView({ sourceChapters }: ReviewCenterViewPro
   const reviewQueuePreview = useMemo(
     () => createReviewQueue(reviewQueueKind, allPointIds, studyRecords),
     [allPointIds, reviewQueueKind, studyRecords]
+  );
+  const dailyStudyProgress = useMemo(
+    () => getDailyStudyProgress(dailyStudyPlan),
+    [dailyStudyPlan]
   );
   const validSelectedUniqueId = selectedUniqueId && pointIndex.has(selectedUniqueId)
     ? selectedUniqueId
@@ -94,9 +121,11 @@ export default function ReviewCenterView({ sourceChapters }: ReviewCenterViewPro
   const activeReviewPosition = validSelectedUniqueId
     ? activeReviewQueue.indexOf(validSelectedUniqueId)
     : -1;
-  const activeReviewLabel = activeReviewQueueKind
-    ? reviewQueueOptions.find(option => option.value === activeReviewQueueKind)?.label
-    : null;
+  const activeReviewLabel = activeReviewQueueKind === 'daily'
+    ? '今日计划'
+    : activeReviewQueueKind
+      ? reviewQueueOptions.find(option => option.value === activeReviewQueueKind)?.label
+      : null;
 
   useEffect(() => {
     articleBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -115,6 +144,17 @@ export default function ReviewCenterView({ sourceChapters }: ReviewCenterViewPro
       return true;
     } catch {
       setStudyMessage('学习记录保存失败，请检查浏览器存储空间');
+      return false;
+    }
+  };
+
+  const commitDailyStudyPlan = (plan: typeof dailyStudyPlan) => {
+    try {
+      saveDailyStudyPlan(window.localStorage, plan);
+      setDailyStudyPlan(plan);
+      return true;
+    } catch {
+      setStudyMessage('今日计划保存失败，请检查浏览器存储空间');
       return false;
     }
   };
@@ -142,6 +182,57 @@ export default function ReviewCenterView({ sourceChapters }: ReviewCenterViewPro
     setActiveReviewQueueKind(reviewQueueKind);
     selectPointById(startPointId);
     setStudyMessage(`已生成 ${queue.length} 个考点的复习队列`);
+  };
+
+  const handleDailyTargetChange = (target: number) => {
+    const plan = createDailyStudyPlan(
+      allPointIds,
+      studyRecords,
+      target,
+      new Date(),
+      dailyStudyPlan
+    );
+    if (!commitDailyStudyPlan(plan)) return;
+
+    if (activeReviewQueueKind === 'daily') {
+      setActiveReviewQueue(plan.pointIds);
+      if (!validSelectedUniqueId || !plan.pointIds.includes(validSelectedUniqueId)) {
+        const resumePointId = getDailyStudyResumePointId(plan);
+        if (resumePointId) selectPointById(resumePointId);
+      }
+    }
+    setStudyMessage(`今日目标已调整为 ${target} 个考点`);
+  };
+
+  const handleStartDailyStudy = () => {
+    if (dailyStudyPlan.pointIds.length === 0) {
+      setStudyMessage('当前没有需要安排的待复习考点');
+      return;
+    }
+    const resumePointId = getDailyStudyResumePointId(dailyStudyPlan);
+    setActiveReviewQueue(dailyStudyPlan.pointIds);
+    setActiveReviewQueueKind('daily');
+    if (resumePointId) selectPointById(resumePointId);
+    setStudyMessage(
+      dailyStudyProgress.isComplete
+        ? '今日计划已完成，可以再次回顾'
+        : `继续今日计划：还剩 ${dailyStudyProgress.total - dailyStudyProgress.completed} 个考点`
+    );
+  };
+
+  const handleCompleteDailyPoint = () => {
+    if (activeReviewQueueKind !== 'daily' || !validSelectedUniqueId) return;
+    const plan = completeDailyStudyPoint(dailyStudyPlan, validSelectedUniqueId);
+    if (plan === dailyStudyPlan || !commitDailyStudyPlan(plan)) return;
+
+    const progress = getDailyStudyProgress(plan);
+    const nextPointId = getNextIncompleteDailyPointId(plan, validSelectedUniqueId);
+    if (nextPointId) {
+      selectPointById(nextPointId);
+      setStudyMessage(`今日已完成 ${progress.completed}/${progress.total}`);
+    } else {
+      setStudyMessage('今日计划已全部完成');
+    }
   };
 
   const handleReviewNavigation = (direction: 'previous' | 'next') => {
@@ -192,9 +283,50 @@ export default function ReviewCenterView({ sourceChapters }: ReviewCenterViewPro
           </div>
         </div>
 
-        <section className="review-launch-box" aria-label="复习队列">
+        <section className="daily-study-card" aria-label="今日学习计划">
+          <div className="daily-study-header">
+            <span className="daily-study-title">
+              <CalendarCheck2 size={17} />
+              今日计划
+            </span>
+            <label className="daily-target-label">
+              <span>目标</span>
+              <select
+                aria-label="今日学习目标"
+                value={dailyStudyPlan.target}
+                onChange={event => handleDailyTargetChange(Number(event.target.value))}
+              >
+                {DAILY_STUDY_TARGETS.map(target => (
+                  <option key={target} value={target}>{target} 个</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="daily-study-progress-row">
+            <span>今日完成</span>
+            <strong>{dailyStudyProgress.completed}/{dailyStudyProgress.total}</strong>
+          </div>
+          <div className="daily-study-progress-track" aria-hidden="true">
+            <span style={{ width: `${dailyStudyProgress.percent}%` }} />
+          </div>
+          <button
+            type="button"
+            className="daily-study-start-button"
+            disabled={dailyStudyProgress.total === 0}
+            onClick={handleStartDailyStudy}
+          >
+            <Play size={15} fill="currentColor" />
+            {dailyStudyProgress.isComplete
+              ? '回顾今日计划'
+              : dailyStudyProgress.completed > 0
+                ? '继续今日计划'
+                : '开始今日计划'}
+          </button>
+        </section>
+
+        <section className="review-launch-box" aria-label="自由复习">
           <label className="review-queue-label">
-            <span>复习队列</span>
+            <span>自由复习</span>
             <select
               className="review-queue-select"
               value={reviewQueueKind}
@@ -326,6 +458,22 @@ export default function ReviewCenterView({ sourceChapters }: ReviewCenterViewPro
                         <Shuffle size={16} />
                         随机
                       </button>
+                      {activeReviewQueueKind === 'daily' && (
+                        <button
+                          type="button"
+                          className="review-complete-button"
+                          aria-label={dailyStudyPlan.completedPointIds.includes(validSelectedUniqueId ?? '')
+                            ? '本项已完成'
+                            : '完成本项'}
+                          disabled={dailyStudyPlan.completedPointIds.includes(validSelectedUniqueId ?? '')}
+                          onClick={handleCompleteDailyPoint}
+                        >
+                          <Check size={16} />
+                          {dailyStudyPlan.completedPointIds.includes(validSelectedUniqueId ?? '')
+                            ? '已完成'
+                            : '完成本项'}
+                        </button>
+                      )}
                       <button
                         type="button"
                         aria-label="下一个考点"
