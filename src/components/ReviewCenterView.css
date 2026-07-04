@@ -486,6 +486,18 @@
   font-size: 0.78rem;
 }
 
+.review-navigation-copy {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.review-navigation-copy small {
+  color: #64748b;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
 .review-navigation-info strong {
   color: #1d4ed8;
   font-size: 0.82rem;
