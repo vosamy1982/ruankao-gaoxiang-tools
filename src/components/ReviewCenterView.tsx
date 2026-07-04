@@ -7,6 +7,7 @@ import {
   getDailyStudyProgress,
   getDailyStudyResumePointId,
   getNextIncompleteDailyPointId,
+  getReviewHistoryLabel,
   loadDailyStudyPlan,
   saveDailyStudyPlan
 } from '../services/DailyStudyPlan';
@@ -118,6 +119,9 @@ export default function ReviewCenterView({ sourceChapters }: ReviewCenterViewPro
   const selectedStudyRecord = validSelectedUniqueId
     ? studyRecords[validSelectedUniqueId] ?? defaultStudyRecord
     : defaultStudyRecord;
+  const selectedReviewHistoryLabel = validSelectedUniqueId
+    ? getReviewHistoryLabel(dailyStudyPlan.reviewHistory?.[validSelectedUniqueId])
+    : null;
   const activeReviewPosition = validSelectedUniqueId
     ? activeReviewQueue.indexOf(validSelectedUniqueId)
     : -1;
@@ -433,7 +437,12 @@ export default function ReviewCenterView({ sourceChapters }: ReviewCenterViewPro
                 {activeReviewQueueKind && activeReviewQueue.length > 0 && (
                   <div className="review-navigation" aria-label="快速复习导航">
                     <div className="review-navigation-info">
-                      <span>{activeReviewLabel}</span>
+                      <div className="review-navigation-copy">
+                        <span>{activeReviewLabel}</span>
+                        {activeReviewQueueKind === 'daily' && selectedReviewHistoryLabel && (
+                          <small>{selectedReviewHistoryLabel}</small>
+                        )}
+                      </div>
                       <strong>
                         {activeReviewPosition >= 0 ? activeReviewPosition + 1 : 0}
                         {' / '}
