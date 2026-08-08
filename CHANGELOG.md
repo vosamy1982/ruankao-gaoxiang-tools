@@ -2,6 +2,15 @@
 
 本项目遵循语义化版本的基本习惯：功能增强使用小版本，缺陷修复和维护更新使用补丁版本。
 
+## v0.11.1 - 2026-08-08
+
+- 更新 React、React DOM、Lucide React、Vite、Vite React 插件、ESLint 9、React Hooks ESLint 插件、Globals、TypeScript ESLint 和 React/Node 类型定义。
+- 修复 Dependabot 报告的开发依赖链安全告警，覆盖 `postcss`、`js-yaml` 和 `brace-expansion`。
+- 将依赖审计从仅检查生产依赖改为检查全部依赖，避免开发依赖漏洞绕过 CI。
+- 将 GitHub Actions 的 `actions/setup-node` 更新到 v7。
+- 将 Vite 配置中的路径解析改为 `import.meta.dirname`，消除未来原生配置加载器警告。
+- 更新前端性能基线。
+
 ## v0.11.0 - 2026-07-04
 
 - 今日计划记录每个考点的最近复习时间和累计复习次数。

@@ -1,7 +1,7 @@
 {
   "name": "ruankao-gaoxiang-tools",
   "private": false,
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "A local-first study and ITTO query tool for the Ruankao advanced project management exam.",
   "license": "MIT",
   "type": "module",
@@ -30,34 +30,34 @@
     "lint": "eslint .",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "audit:data": "node --experimental-strip-types scripts/audit-data.ts",
-    "audit:dependencies": "npm audit --omit=dev --audit-level=moderate --registry=https://registry.npmjs.org",
+    "audit:dependencies": "npm audit --audit-level=moderate --registry=https://registry.npmjs.org",
     "bundle:check": "node --experimental-strip-types scripts/check-bundle-size.ts",
     "check": "npm run lint && npm run test && npm run audit:data && npm run audit:dependencies && npm run build && npm run bundle:check",
     "preview": "vite preview"
   },
   "dependencies": {
     "@uiw/react-md-editor": "^4.1.1",
-    "lucide-react": "^1.23.0",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
+    "lucide-react": "^1.30.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.4",
+    "@eslint/js": "^9.39.5",
     "@types/formidable": "^3.5.1",
-    "@types/node": "^24.13.2",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.3",
-    "eslint": "^9.39.4",
-    "eslint-plugin-react-hooks": "^7.0.1",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "formidable": "^3.5.4",
-    "globals": "^17.7.0",
+    "globals": "^17.9.0",
     "typescript": "~6.0.2",
-    "typescript-eslint": "^8.62.1",
-    "vite": "^8.1.3"
+    "typescript-eslint": "^8.66.0",
+    "vite": "^8.2.1"
   }
 }
