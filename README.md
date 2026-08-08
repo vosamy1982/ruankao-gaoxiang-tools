@@ -166,7 +166,7 @@ npm run check
 
 请阅读 `CONTRIBUTING.md`。本项目只接受原创或明确授权可再分发的学习内容。
 
-每个 Pull Request 都会在 Node.js 24 环境执行依赖审计、数据审计、测试、Lint、生产构建和包体积检查。仓库还会通过 Dependabot 每周检查依赖更新，并使用 CodeQL 扫描 JavaScript/TypeScript 代码。
+每个 Pull Request 都会在 Node.js 24 环境执行全量依赖审计、数据审计、测试、Lint、生产构建和包体积检查。仓库还会通过 Dependabot 每周检查依赖更新，并使用 CodeQL 扫描 JavaScript/TypeScript 代码。
 
 版本更新记录见 `CHANGELOG.md`。
 

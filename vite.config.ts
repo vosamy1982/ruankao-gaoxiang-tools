@@ -18,7 +18,7 @@ function apiPlugin() {
           });
           req.on('end', () => {
             try {
-              const dataPath = path.resolve(__dirname, 'src/data/exam-points.json');
+              const dataPath = path.resolve(import.meta.dirname, 'src/data/exam-points.json');
               try {
                 fs.copyFileSync(dataPath, dataPath + '.bak');
               } catch (error) {
@@ -40,7 +40,7 @@ function apiPlugin() {
 
         if (req.url === '/api/upload-image' && req.method === 'POST') {
           const form = formidable({
-            uploadDir: path.resolve(__dirname, 'public/images'),
+            uploadDir: path.resolve(import.meta.dirname, 'public/images'),
             keepExtensions: true,
             maxFileSize: 5 * 1024 * 1024,
             filename: (_name, ext) => {
