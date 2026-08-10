@@ -2,6 +2,15 @@
 
 本项目遵循语义化版本的基本习惯：功能增强使用小版本，缺陷修复和维护更新使用补丁版本。
 
+## v0.12.0 - 2026-08-10
+
+- 在复习中心新增完整学习数据备份，可一键导出和导入学习状态、今日计划和复习历史。
+- 新增版本化完整备份 JSON 格式，导入时校验应用标识、格式版本、考点 ID、学习记录和今日计划结构。
+- 导入旧日期备份后会按当前日期重建今日计划，同时保留目标数量和复习历史。
+- 保留原有 `study-progress-YYYY-MM-DD.json` 轻量学习记录导入导出，不与完整备份或考点内容 JSON 混用。
+- 增加完整备份服务和格式校验测试。
+- 更新 README 和前端性能基线。
+
 ## v0.11.1 - 2026-08-08
 
 - 更新 React、React DOM、Lucide React、Vite、Vite React 插件、ESLint 9、React Hooks ESLint 插件、Globals、TypeScript ESLint 和 React/Node 类型定义。
