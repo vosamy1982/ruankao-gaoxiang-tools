@@ -261,6 +261,58 @@
   font-size: 0.72rem;
 }
 
+.learning-backup-card {
+  margin: 0.9rem 1rem 0;
+  padding: 0.85rem;
+  border: 1px solid #e0e7ff;
+  border-radius: 8px;
+  background: #eef2ff;
+}
+
+.learning-backup-header {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.learning-backup-header strong {
+  color: #3730a3;
+  font-size: 0.84rem;
+}
+
+.learning-backup-header span {
+  color: #64748b;
+  font-size: 0.73rem;
+  line-height: 1.45;
+}
+
+.learning-backup-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+
+.learning-backup-actions button {
+  min-height: 2.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0 0.45rem;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #3730a3;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.learning-backup-actions button:hover {
+  border-color: #818cf8;
+  background: #e0e7ff;
+}
+
 .review-session-card {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -569,6 +621,7 @@
 .daily-target-label select:focus-visible,
 .daily-study-start-button:focus-visible,
 .review-start-button:focus-visible,
+.learning-backup-actions button:focus-visible,
 .review-status-button:focus-visible,
 .review-navigation-actions button:focus-visible,
 .review-favorite-button:focus-visible,
@@ -779,6 +832,7 @@
   .review-summary,
   .daily-study-card,
   .review-launch-box,
+  .learning-backup-card,
   .review-session-card,
   .review-message {
     margin-left: 0.75rem;

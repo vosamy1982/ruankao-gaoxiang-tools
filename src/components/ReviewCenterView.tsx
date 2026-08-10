@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ChangeEvent } from 'react';
 import { processExamChapters } from '../services/ExamDataManager';
 import {
   DAILY_STUDY_TARGETS,
@@ -21,6 +22,12 @@ import {
   setStudyRecord
 } from '../services/StudyProgress';
 import type { ReviewQueueKind } from '../services/StudyProgress';
+import {
+  MAX_LEARNING_BACKUP_FILE_SIZE,
+  createLearningBackup,
+  createLearningBackupFilename,
+  validateLearningBackup
+} from '../services/LearningBackup';
 import type { ExamChapter, ExamPoint, StudyRecords, StudyStatus } from '../types';
 import {
   ArrowLeft,
@@ -28,10 +35,12 @@ import {
   BookOpenCheck,
   CalendarCheck2,
   Check,
+  Download,
   Heart,
   Play,
   Shuffle,
   Target,
+  Upload,
   X
 } from 'lucide-react';
 import { ExamPointRenderer } from './ExamPointRenderer';
@@ -98,6 +107,7 @@ export default function ReviewCenterView({ sourceChapters }: ReviewCenterViewPro
     return plan;
   });
   const articleBodyRef = useRef<HTMLDivElement>(null);
+  const learningBackupInputRef = useRef<HTMLInputElement>(null);
 
   const studySummary = useMemo(
     () => getStudySummary(studyRecords, allPointIds),
@@ -259,6 +269,72 @@ export default function ReviewCenterView({ sourceChapters }: ReviewCenterViewPro
     setStudyMessage('已退出快速复习');
   };
 
+  const handleLearningBackupExport = () => {
+    const backup = createLearningBackup(studyRecords, dailyStudyPlan);
+    const blob = new Blob(
+      [JSON.stringify(backup, null, 2)],
+      { type: 'application/json' }
+    );
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = createLearningBackupFilename();
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    setStudyMessage(
+      `已导出完整备份：${Object.keys(studyRecords).length} 条学习记录，${Object.keys(dailyStudyPlan.reviewHistory).length} 条复习历史`
+    );
+  };
+
+  const handleLearningBackupImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (file.size > MAX_LEARNING_BACKUP_FILE_SIZE) {
+      setStudyMessage('导入失败：完整备份文件不能超过 2 MB');
+      return;
+    }
+
+    try {
+      const result = validateLearningBackup(JSON.parse(await file.text()) as unknown, allowedPointIds);
+      if (!result.success) {
+        const details = result.errors.slice(0, 3).join('；');
+        const remainder = result.errors.length > 3 ? `；另有 ${result.errors.length - 3} 个错误` : '';
+        setStudyMessage(`导入失败：${details}${remainder}`);
+        return;
+      }
+
+      if (!confirm('导入完整备份将替换当前学习记录、今日计划和复习历史，确定继续吗？')) {
+        return;
+      }
+
+      try {
+        saveStudyRecords(window.localStorage, result.data.studyData.records);
+        saveDailyStudyPlan(window.localStorage, result.data.dailyStudyPlan);
+        const restoredPlan = loadDailyStudyPlan(
+          window.localStorage,
+          allPointIds,
+          result.data.studyData.records
+        );
+        saveDailyStudyPlan(window.localStorage, restoredPlan);
+        setStudyRecords(result.data.studyData.records);
+        setDailyStudyPlan(restoredPlan);
+        setActiveReviewQueue([]);
+        setActiveReviewQueueKind(null);
+        setStudyMessage(
+          `导入成功：恢复 ${Object.keys(result.data.studyData.records).length} 条学习记录，${Object.keys(restoredPlan.reviewHistory).length} 条复习历史`
+        );
+      } catch {
+        setStudyMessage('导入失败：学习数据保存失败，请检查浏览器存储空间');
+      }
+    } catch (error) {
+      setStudyMessage(`导入失败：${error instanceof SyntaxError ? 'JSON 格式无效' : String(error)}`);
+    }
+  };
+
   if (!chapters || chapters.length === 0) {
     return <div className="review-center-empty">无考点数据加载。</div>;
   }
@@ -354,6 +430,36 @@ export default function ReviewCenterView({ sourceChapters }: ReviewCenterViewPro
             继续学习
             <span>{reviewQueuePreview.length}</span>
           </button>
+        </section>
+
+        <section className="learning-backup-card" aria-label="学习数据备份">
+          <div className="learning-backup-header">
+            <strong>学习数据备份</strong>
+            <span>学习状态、今日计划和复习历史</span>
+          </div>
+          <input
+            ref={learningBackupInputRef}
+            type="file"
+            accept="application/json,.json"
+            hidden
+            onChange={handleLearningBackupImport}
+          />
+          <div className="learning-backup-actions">
+            <button
+              type="button"
+              onClick={handleLearningBackupExport}
+            >
+              <Download size={15} />
+              导出完整备份
+            </button>
+            <button
+              type="button"
+              onClick={() => learningBackupInputRef.current?.click()}
+            >
+              <Upload size={15} />
+              导入完整备份
+            </button>
+          </div>
         </section>
 
         {activeReviewQueueKind && activeReviewQueue.length > 0 && (
